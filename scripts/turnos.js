@@ -86,13 +86,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (ensureCatalogOrWarn()) {
     populateServicios();
-    // Luego de populateServicios();
+   
 const preselected = localStorage.getItem("selectedServiceId");
 if (preselected && document.getElementById("servicio")) {
   const selServicio = document.getElementById("servicio");
   if ([...selServicio.options].some(o => o.value === preselected)) {
     selServicio.value = preselected;
-    // Si ya manejás refresh de horas, forzalo por si hay fecha cargada:
+   
     const evt = new Event("change");
     selServicio.dispatchEvent(evt);
   }

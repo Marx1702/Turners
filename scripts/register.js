@@ -13,8 +13,8 @@ function showToast(message, type = "info") {
     text: message,
     duration: 3000,
     close: true,
-    gravity: "top",     // "top" | "bottom"
-    position: "right",  // "left" | "center" | "right"
+    gravity: "top",    
+    position: "right", 
     stopOnFocus: true,
     style: { background: bg, borderRadius: "8px", fontSize: "0.9rem" }
   }).showToast();
@@ -82,6 +82,6 @@ function registerUser(nombre, email, password) {
   localStorage.setItem("users", JSON.stringify(users));
 
   showToast("Usuario registrado con éxito 👌", "success");
-  // Redirigir (ajustá la ruta si este HTML está en subcarpeta)
+  // Redirigir 
   setTimeout(() => { window.location.href = "../views/login.html"; }, 900);
 }

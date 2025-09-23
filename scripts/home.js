@@ -15,7 +15,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Animación suave de aparición al hacer scroll
   const obsEls = document.querySelectorAll(".obs");
   if ("IntersectionObserver" in window && obsEls.length) {
     const io = new IntersectionObserver((entries) => {

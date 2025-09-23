@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const footerDiv = document.getElementById("footer");
   if (!footerDiv) return;
 
-  fetch("../views/footer.html") // si tus vistas están en /views/, el footer está en la raíz
+  fetch("../views/footer.html")
     .then(res => res.text())
     .then(html => { footerDiv.innerHTML = html; })
     .catch(() => {

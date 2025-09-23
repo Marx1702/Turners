@@ -27,7 +27,7 @@ function loginUser(userFound) {
     localStorage.setItem("activeUser", JSON.stringify(userFound));
     // redirección después de mostrar el toast
     setTimeout(() => {
-      window.location.href = "index.html"; // ajustá la ruta si login.html está en subcarpeta
+      window.location.href = "../views/index.html"; 
     }, 900);
   } else {
     showToast("Correo o contraseña incorrectos.", "error");

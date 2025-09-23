@@ -1,9 +1,9 @@
-// ../scripts/services.js
-// Render de servicios con imagen por tarjeta (sin romper tu HTML ni rutas)
 
-const SERVICES_JSON_URL = '../data/services.json'; // desde services.html (subcarpeta) subir 1 nivel
-const IMG_BASE = '../assets/images/services/';     // carpeta donde vas a poner las imágenes
-const IMG_PLACEHOLDER = 'placeholder.jpg';         // imagen por defecto (ponela en /assets/images/services/)
+// Render de servicios con imagen por tarjeta 
+
+const SERVICES_JSON_URL = '../data/services.json'; 
+const IMG_BASE = '../assets/images/services/';    
+const IMG_PLACEHOLDER = 'placeholder.jpg';        
 
 document.addEventListener('DOMContentLoaded', initServices);
 
@@ -67,9 +67,9 @@ function wireEvents(container) {
     const btn = e.target.closest('.reservar-btn');
     if (!btn) return;
     const id = Number(btn.dataset.id);
-    // Si ya tenías lógica para ir a turnos o guardar selección, mantenela acá:
+
     localStorage.setItem('turners:selectedServiceId', String(id));
-    window.location.href = 'turnos.html'; // misma carpeta que services.html
+    window.location.href = '../views/turnos.html';
   });
 }
 
