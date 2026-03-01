@@ -1,36 +1,37 @@
+// scripts/navbar.js – Role-based navigation with logout toast
 document.addEventListener("DOMContentLoaded", () => {
   const menuToggle = document.getElementById("menuToggle");
   const navLinks = document.getElementById("navLinks");
   const authLink = document.getElementById("authLink");
 
-  // --- Menú hamburguesa ---
   if (menuToggle && navLinks) {
-    menuToggle.addEventListener("click", () => {
-      navLinks.classList.toggle("show");
-    });
+    menuToggle.addEventListener("click", () =>
+      navLinks.classList.toggle("show"),
+    );
   }
 
-  
   const getActiveUser = () => {
-    try { return JSON.parse(localStorage.getItem("activeUser")); }
-    catch { return null; }
+    try {
+      return JSON.parse(localStorage.getItem("activeUser"));
+    } catch {
+      return null;
+    }
   };
 
   const findLink = (href) =>
     navLinks ? navLinks.querySelector(`a[href="${href}"]`) : null;
 
-  const removeExistingTurnos = () => {
+  const removeLinks = (href) => {
     if (!navLinks) return;
-    const existing = navLinks.querySelectorAll('a[href="turnos.html"]');
-    existing.forEach(a => {
+    navLinks.querySelectorAll(`a[href="${href}"]`).forEach((a) => {
       const li = a.closest("li");
       (li || a).remove();
     });
-  }; //Si no hay una sesion iniciada la opcion de turnos del navbar no se muestra
+  };
 
   const createLiLink = (href, text) => {
     const li = document.createElement("li");
-    const a  = document.createElement("a");
+    const a = document.createElement("a");
     a.href = href;
     a.textContent = text;
     li.appendChild(a);
@@ -40,48 +41,103 @@ document.addEventListener("DOMContentLoaded", () => {
   const insertAfter = (newNode, referenceNode) => {
     if (!referenceNode || !referenceNode.parentNode) return;
     referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
-  }; 
+  };
 
-  // --- Lógica de sesión ---
-  const user = getActiveUser();
+  function showToast(message, type = "info") {
+    let container = document.querySelector(".toast-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.className = "toast-container";
+      document.body.appendChild(container);
+    }
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
 
-  // Siempre limpiar cualquier "Turnos" que venga del HTML
-  removeExistingTurnos();
+  // Clean up dynamic links
+  [
+    "turnos.html",
+    "clientes.html",
+    "vehiculos.html",
+    "seguimientos.html",
+    "dashboard.html",
+  ].forEach(removeLinks);
 
   if (!authLink) return;
+  const user = getActiveUser();
 
   if (user) {
-    // Cambiar "Iniciar sesión" -> "Cerrar sesión"
     authLink.textContent = "Cerrar sesión";
     authLink.href = "#";
     authLink.classList.remove("login-button");
-    // Evitar listeners duplicados reemplazando el nodo
+
     const clone = authLink.cloneNode(true);
     authLink.parentNode.replaceChild(clone, authLink);
-    clone.addEventListener("click", (e) => {
-      e.preventDefault();
-      localStorage.removeItem("activeUser");
-      window.location.href = "index.html";
-    }, { once: true });
+    clone.addEventListener(
+      "click",
+      (e) => {
+        e.preventDefault();
+        localStorage.removeItem("activeUser");
+        showToast("Sesión cerrada correctamente 👋", "info");
+        setTimeout(() => {
+          window.location.href = "index.html";
+        }, 1000);
+      },
+      { once: true },
+    );
 
-    // Insertar "Turnos" justo después de "Servicios"
-    const serviciosAnchor = findLink("services.html");
-    const liTurnos = createLiLink("turnos.html", "Turnos");
-    if (serviciosAnchor) {
-      insertAfter(liTurnos, serviciosAnchor.closest("li") || serviciosAnchor);
-    } else if (navLinks) {
-      navLinks.insertBefore(liTurnos, clone.closest("li") || clone);
+    if (user.rol === "admin") {
+      const serviciosLink = findLink("services.html");
+      if (serviciosLink) {
+        const li = serviciosLink.closest("li");
+        (li || serviciosLink).remove();
+      }
+
+      const inicioLink = findLink("index.html");
+      let lastInserted = inicioLink?.closest("li") || inicioLink;
+
+      const items = [
+        { href: "dashboard.html", text: "📊 Dashboard" },
+        { href: "clientes.html", text: "Clientes" },
+        { href: "vehiculos.html", text: "Vehículos" },
+        { href: "seguimientos.html", text: "Seguimientos" },
+      ];
+      items.forEach((item) => {
+        const li = createLiLink(item.href, item.text);
+        if (lastInserted) {
+          insertAfter(li, lastInserted);
+          lastInserted = li;
+        } else if (navLinks) {
+          navLinks.insertBefore(li, clone.closest("li") || clone);
+        }
+      });
+    } else {
+      const serviciosAnchor = findLink("services.html");
+      let lastInserted = serviciosAnchor?.closest("li") || serviciosAnchor;
+
+      const items = [
+        { href: "turnos.html", text: "Mis Turnos" },
+        { href: "vehiculos.html", text: "Mis Vehículos" },
+        { href: "seguimientos.html", text: "Mi Historial" },
+      ];
+      items.forEach((item) => {
+        const li = createLiLink(item.href, item.text);
+        if (lastInserted) {
+          insertAfter(li, lastInserted);
+          lastInserted = li;
+        } else if (navLinks) {
+          navLinks.insertBefore(li, clone.closest("li") || clone);
+        }
+      });
     }
-
   } else {
-    // Usuario no logueado: asegurar "Iniciar sesión"
     const clone = authLink.cloneNode(true);
     clone.textContent = "Iniciar sesión";
     clone.href = "login.html";
     clone.classList.add("login-button");
     authLink.parentNode.replaceChild(clone, authLink);
-
-    // Sin sesión: garantizar que no exista "Turnos"
-    removeExistingTurnos();
   }
 });

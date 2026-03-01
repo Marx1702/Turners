@@ -1,68 +1,99 @@
-/* Reset de caja para evitar desbordes */
-*, *::before, *::after { box-sizing: border-box; }
+/* ============================================
+   TURNOS – Dark Premium
+   ============================================ */
+.container h1 { margin-bottom: 24px; }
 
-.container { max-width: 980px; margin: 2rem auto; padding: 0 1rem; }
-.card { background: #9b59b6; border-radius: 12px; padding: 1rem; box-shadow: 0 4px 10px rgba(0,0,0,.08); }
-
-/* FORM LAYOUT con Grid de 12 columnas */
 .form-turnos {
   display: grid;
-  gap: 1rem;
+  gap: 16px;
   grid-template-columns: repeat(12, 1fr);
   grid-template-areas:
-    "servicio servicio servicio servicio fecha fecha hora hora cliente cliente btn btn";
+    "servicio servicio servicio vehiculo vehiculo vehiculo fecha fecha hora hora btn btn";
   align-items: end;
 }
 
-/* Campos */
 .field { min-width: 0; }
-.field label { display: block; font-weight: 600; margin-bottom: .4rem; }
+.field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text-muted, #999);
+  font-size: 0.85rem;
+}
 .field input, .field select {
   width: 100%;
   min-width: 0;
-  padding: .6rem .7rem;
-  border: 1px solid #000000;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 8px;
-  background: #ffffff;
+  color: var(--text, #e8e8f0);
+  font-family: var(--font, 'Inter', sans-serif);
+  font-size: 0.95rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field input:focus, .field select:focus {
+  outline: none;
+  border-color: var(--accent, #dc2626);
+  box-shadow: 0 0 0 3px rgba(220,38,38,0.35);
 }
 
-/* Ubicación por áreas */
-.field--servicio { grid-area: servicio; }
-.field--fecha    { grid-area: fecha; }
-.field--hora     { grid-area: hora; }
-.field--cliente  { grid-area: cliente; }
-.field--btn      { grid-area: btn; display: flex; align-items: flex-end; }
+.field--servicio  { grid-area: servicio; }
+.field--vehiculo  { grid-area: vehiculo; }
+.field--fecha     { grid-area: fecha; }
+.field--hora      { grid-area: hora; }
+.field--cliente   { grid-area: cliente; }
+.field--btn       { grid-area: btn; display: flex; align-items: flex-end; }
 
 .form-turnos button[type="submit"] {
   width: 100%;
-  padding: .7rem 1rem;
+  padding: 10px 16px;
   border: 0;
   border-radius: 8px;
   cursor: pointer;
-  font-weight: 600;
-  background:#5ccb43; color:#ffffff;
+  font-weight: 700;
+  font-family: var(--font, 'Inter', sans-serif);
+  font-size: 0.9rem;
+  background: var(--green, #22c55e);
+  color: #fff;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 14px rgba(34,197,94,0.3);
+}
+.form-turnos button[type="submit"]:hover {
+  background: #16a34a;
+  box-shadow: 0 6px 20px rgba(34,197,94,0.4);
 }
 
-.muted { color: #000000; }
+.muted { color: var(--text-muted, #8888a4); font-size: 0.85rem; }
 
-/* Tabla */
+/* Tabla de turnos */
 .table-wrap { overflow-x: auto; margin-top: 1rem; }
-table { width: 100%; border-collapse: collapse; font-size: .95rem; }
-thead th { text-align: left; background:#000000; }
-th, td { padding: .65rem .6rem; border-bottom: 1px solid #080808; }
-.actions button { border: 0; background: transparent; cursor: pointer; text-decoration: underline; }
 
-/* BREAKPOINTS */
-/* Tablet */
+.actions button {
+  border: 1px solid var(--red, #ef4444);
+  background: transparent;
+  color: var(--red, #ef4444);
+  cursor: pointer;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+.actions button:hover {
+  background: var(--red, #ef4444);
+  color: #fff;
+}
+
+/* Responsive */
 @media (max-width: 992px) {
   .form-turnos {
     grid-template-areas:
-      "servicio servicio servicio servicio cliente cliente cliente cliente btn btn btn btn"
-      "fecha fecha fecha hora hora hora btn btn btn btn btn btn";
+      "servicio servicio servicio servicio servicio servicio cliente cliente cliente cliente cliente cliente"
+      "fecha fecha fecha fecha hora hora hora hora btn btn btn btn";
   }
 }
 
-/* Móvil */
 @media (max-width: 600px) {
   .form-turnos {
     grid-template-areas:

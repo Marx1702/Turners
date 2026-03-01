@@ -1,48 +1,45 @@
+// scripts/services.js – Loads from API
+const API_BASE = "http://localhost:3001/api";
+const IMG_BASE = "../assets/images/services/";
+const IMG_PLACEHOLDER = "placeholder.jpg";
 
-// Render de servicios con imagen por tarjeta 
-
-const SERVICES_JSON_URL = '../data/services.json'; 
-const IMG_BASE = '../assets/images/services/';    
-const IMG_PLACEHOLDER = 'placeholder.jpg';        
-
-document.addEventListener('DOMContentLoaded', initServices);
+document.addEventListener("DOMContentLoaded", initServices);
 
 async function initServices() {
-  const list = document.getElementById('services-list');
+  const list = document.getElementById("services-list");
   if (!list) return;
 
   try {
-    const servicios = await cargarServicios();
+    const res = await fetch(`${API_BASE}/servicios`);
+    const servicios = await res.json();
+
+    // Also save to localStorage for turnos.js compatibility
+    const catalog = servicios.map((s) => ({
+      id: s.id,
+      name: s.nombre,
+      duracionMin: s.duracion_min,
+      precio: s.precio,
+      image: s.imagen,
+    }));
+    localStorage.setItem("services_catalog", JSON.stringify(catalog));
+
     renderServicios(servicios, list);
     wireEvents(list);
   } catch (err) {
     console.error(err);
-    list.innerHTML = `<p class="error">No se pudieron cargar los servicios.</p>`;
+    list.innerHTML = `<p style="color:#ef4444;text-align:center;">No se pudieron cargar los servicios. ¿Está corriendo el servidor?</p>`;
   }
 }
 
-async function cargarServicios() {
-  const res = await fetch(SERVICES_JSON_URL, { cache: 'no-store' });
-  if (!res.ok) throw new Error('Error cargando services.json');
-  return res.json();
-}
-
 function renderServicios(servicios, container) {
-  container.innerHTML = servicios.map((s) => {
-    // 1) Si el JSON trae "image" se usa tal cual; 
-    // 2) si no, generamos un nombre de archivo por slug del nombre
-    const fileName = s.image ? s.image : slug(`${s.nombre}`) + '.jpg';
-    const imgSrc = `${IMG_BASE}${fileName}`;
+  container.innerHTML = servicios
+    .map((s) => {
+      const imgSrc = `${IMG_BASE}${s.imagen || "placeholder.jpg"}`;
+      const precio =
+        s.precio != null ? `$${Number(s.precio).toLocaleString("es-AR")}` : "";
+      const duracion = s.duracion_min != null ? `${s.duracion_min} min` : "";
 
-    const precio = (s.precio != null)
-      ? `$${Number(s.precio).toLocaleString('es-AR')}`
-      : '';
-
-    const duracion = (s.duracionMin != null)
-      ? `${s.duracionMin} min`
-      : '';
-
-    return `
+      return `
       <article class="service-card">
         <div class="service-media">
           <img src="${imgSrc}" alt="${escapeHtml(s.nombre)}"
@@ -51,42 +48,34 @@ function renderServicios(servicios, container) {
         <div class="service-body">
           <h3 class="service-title">${escapeHtml(s.nombre)}</h3>
           <p class="service-meta">
-            ${duracion ? `<span>${duracion}</span>` : ''}
-            ${precio ? `<span>${precio}</span>` : ''}
+            ${duracion ? `<span>${duracion}</span>` : ""}
+            ${precio ? `<span>${precio}</span>` : ""}
           </p>
-          <p class="service-desc">${escapeHtml(s.descripcion || '')}</p>
-          <button class="btn reservar-btn" data-id="${s.id}">Reservar</button>
+          <p class="service-desc">${escapeHtml(s.descripcion || "")}</p>
+          <button class="reservar-btn" data-id="${s.id}">Reservar</button>
         </div>
       </article>
     `;
-  }).join('');
+    })
+    .join("");
 }
 
 function wireEvents(container) {
-  container.addEventListener('click', (e) => {
-    const btn = e.target.closest('.reservar-btn');
+  container.addEventListener("click", (e) => {
+    const btn = e.target.closest(".reservar-btn");
     if (!btn) return;
     const id = Number(btn.dataset.id);
 
-    localStorage.setItem('turners:selectedServiceId', String(id));
-    window.location.href = '../views/turnos.html';
+    localStorage.setItem("selectedServiceId", String(id));
+    window.location.href = "turnos.html";
   });
-}
-
-// Utilidades
-function slug(str) {
-  return String(str)
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // saca tildes
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')     // espacios y no alfanum → guiones
-    .replace(/(^-|-$)+/g, '');       // bordes
 }
 
 function escapeHtml(str) {
   return String(str)
-    .replaceAll('&','&amp;')
-    .replaceAll('<','&lt;')
-    .replaceAll('>','&gt;')
-    .replaceAll('"','&quot;')
-    .replaceAll("'",'&#39;');
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }

@@ -1,9 +1,13 @@
+/* ============================================
+   FOOTER – Red/Black Premium
+   ============================================ */
 .footer {
-  background: #111118;
-  color: #e9e9ef;
-  padding: 20px 0;
-  margin-top: 12px;
-  border-top: 10px solid #282832;
+  background: rgba(10, 10, 10, 0.95);
+  backdrop-filter: blur(12px);
+  color: #aaa;
+  padding: 24px 0;
+  margin-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.08);
 }
 
 .footer-container {
@@ -12,33 +16,36 @@
   display: grid;
   gap: 20px;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  padding: 0 16px;
+  padding: 0 20px;
 }
 
-
+.footer h4 {
+  color: #fff;
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+}
 
 .footer-contact ul {
   list-style: none;
   padding: 0;
   margin: 0;
 }
-
 .footer-contact li {
   margin-bottom: 6px;
+  font-size: 0.9rem;
 }
 
 .footer-social a {
-  color: #7c5cff;
+  color: #ef4444;
   text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
 }
-
-.footer-social a:hover {
-  text-decoration: underline;
-}
+.footer-social a:hover { color: #fff; }
 
 .footer-bottom {
   text-align: center;
   margin-top: 20px;
-  font-size: 0.9rem;
-  color: #aaa;
+  font-size: 0.85rem;
+  color: #666;
 }

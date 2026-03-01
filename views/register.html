@@ -1,38 +1,60 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Registro de Usuario</title>
-  <link rel="stylesheet" href="../styles/register.css" />
-  <!-- Toastify CSS -->
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Registro – Turners</title>
+    <link rel="stylesheet" href="../styles/register.css" />
+  </head>
+  <body>
+    <div class="register-container">
+      <h2>Crear una cuenta</h2>
+      <form id="registerForm">
+        <label for="nombre">Nombre</label>
+        <input
+          type="text"
+          id="nombre"
+          name="nombre"
+          placeholder="Tu nombre"
+          required />
 
-<!-- Toastify JS -->
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+        <label for="apellido">Apellido</label>
+        <input
+          type="text"
+          id="apellido"
+          name="apellido"
+          placeholder="Tu apellido"
+          required />
 
-</head>
-<body>
+        <label for="email">Correo electrónico</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          placeholder="tu@email.com"
+          required />
 
-  <div class="register-container">
-    <h2>Crear una cuenta</h2>
+        <label for="password">Contraseña</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Mínimo 6 caracteres"
+          required />
 
-    <form id="registerForm">
-      <label for="nombre">Nombre</label>
-      <input type="text" id="nombre" name="nombre" required />
+        <label for="confirmPassword">Confirmar contraseña</label>
+        <input
+          type="password"
+          id="confirmPassword"
+          name="confirmPassword"
+          placeholder="Repetir contraseña"
+          required />
 
-      <label for="email">Correo electrónico</label>
-      <input type="email" id="email" name="email" required />
+        <button type="submit">Registrar</button>
+      </form>
+      <p>¿Ya tenés cuenta? <a href="login.html">Iniciar sesión</a></p>
+    </div>
 
-      <label for="password">Contraseña</label>
-      <input type="password" id="password" name="password" required />
-
-      <button type="submit">Registrar</button>
-    </form>
-
-    <p>¿Ya tenés cuenta? <a href="login.html">Iniciar sesión</a></p>
-  </div>
-
-  <script src="../scripts/register.js"></script>
-</body>
+    <script src="../scripts/register.js"></script>
+  </body>
 </html>

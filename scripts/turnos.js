@@ -1,307 +1,460 @@
-// /scripts/turnos.js
+// scripts/turnos.js – Personal turnos with vehicle selector and duration info
+const API_BASE = "http://localhost:3001/api";
+
 document.addEventListener("DOMContentLoaded", () => {
-  /* =========  Sesión  ========= */
   const getActiveUser = () => {
-    try { return JSON.parse(localStorage.getItem("activeUser")); }
-    catch { return null; }
+    try {
+      return JSON.parse(localStorage.getItem("activeUser"));
+    } catch {
+      return null;
+    }
   };
   const activeUser = getActiveUser();
   if (!activeUser) {
     window.location.href = "login.html";
     return;
   }
-  const USER_ID    = activeUser.id    ?? activeUser.uid   ?? null;
-  const USER_EMAIL = activeUser.email ?? null;
-  const USER_NAME  = activeUser.name  ?? activeUser.nombre ?? activeUser.username ?? null;
 
-  const belongsToActiveUser = (t) => {
-    if (USER_EMAIL && t.userEmail) return t.userEmail === USER_EMAIL;
-    if (USER_ID != null && t.userId != null) return String(t.userId) === String(USER_ID);
-    if (USER_NAME && t.userName) return t.userName === USER_NAME;
-    return false;
-  };
+  const USER_ID = activeUser.id;
 
-  /* =========  Storage helpers  ========= */
-  const STORAGE_KEY_TURNOS = "turnos";
-  const STORAGE_KEY_SERVICES = "services_catalog";
-
-  const loadAllTurnos = () => {
-    try {
-      const raw = JSON.parse(localStorage.getItem(STORAGE_KEY_TURNOS));
-      return Array.isArray(raw) ? raw : [];
-    } catch { return []; }
-  };
-  const saveAllTurnos = (arr) =>
-    localStorage.setItem(STORAGE_KEY_TURNOS, JSON.stringify(arr));
-
-  const loadCatalog = () => {
-    try {
-      const raw = JSON.parse(localStorage.getItem(STORAGE_KEY_SERVICES));
-      return Array.isArray(raw) ? raw : [];
-    } catch { return []; }
-  };
-
-  /* =========  UI refs  ========= */
   const form = document.getElementById("turnoForm");
   const selServicio = document.getElementById("servicio");
+  const selVehiculo = document.getElementById("vehiculo");
   const inputFecha = document.getElementById("fecha");
   const selHora = document.getElementById("hora");
   const tbody = document.getElementById("turnosBody");
-  const usuarioActual = document.getElementById("usuarioActual");
+  const usuarioInfo = document.getElementById("usuarioActual");
+  const durInfo = document.getElementById("duracionInfo");
 
-  if (usuarioActual) {
-    const who = USER_EMAIL || USER_NAME || "(usuario)";
-    usuarioActual.textContent = `Sesión: ${who}`;
+  if (usuarioInfo) {
+    usuarioInfo.textContent = `Sesión: ${activeUser.nombre} (${activeUser.email})`;
   }
 
-  /* =========  Catálogo desde services.js  ========= */
-  let catalog = loadCatalog();
+  let catalog = [];
 
-  const ensureCatalogOrWarn = () => {
-    if (!catalog || catalog.length === 0) {
-      // Catálogo vacío: deshabilitar selects y guiar al usuario.
+  // Load services
+  async function loadCatalog() {
+    try {
+      const res = await fetch(`${API_BASE}/servicios`);
+      catalog = await res.json();
+      populateServicios();
+    } catch (err) {
+      console.error(err);
       if (selServicio) {
-        selServicio.innerHTML = `<option value="">No hay servicios disponibles. Visitá la página de Servicios primero.</option>`;
+        selServicio.innerHTML =
+          '<option value="">Error al cargar servicios</option>';
         selServicio.disabled = true;
       }
-      if (selHora) {
-        selHora.innerHTML = `<option value="">Selecciona fecha y servicio...</option>`;
-        selHora.disabled = true;
-      }
-      return false;
     }
-    return true;
-  };
+  }
 
-  const populateServicios = () => {
-    selServicio.innerHTML = `<option value="">Seleccionar servicio...</option>`;
-    catalog.forEach(s => {
+  function populateServicios() {
+    selServicio.innerHTML = '<option value="">Seleccionar servicio...</option>';
+    catalog.forEach((s) => {
       const opt = document.createElement("option");
       opt.value = String(s.id);
-      opt.textContent = s.name;
+      opt.textContent = `${s.nombre} (${s.duracion_min || 30} min)`;
+      opt.dataset.duracion = s.duracion_min || 30;
       selServicio.appendChild(opt);
     });
     selServicio.disabled = false;
-  };
 
-  if (ensureCatalogOrWarn()) {
-    populateServicios();
-   
-const preselected = localStorage.getItem("selectedServiceId");
-if (preselected && document.getElementById("servicio")) {
-  const selServicio = document.getElementById("servicio");
-  if ([...selServicio.options].some(o => o.value === preselected)) {
-    selServicio.value = preselected;
-   
-    const evt = new Event("change");
-    selServicio.dispatchEvent(evt);
-  }
-  localStorage.removeItem("selectedServiceId");
-}
-
+    const preselected = localStorage.getItem("selectedServiceId");
+    if (
+      preselected &&
+      [...selServicio.options].some((o) => o.value === preselected)
+    ) {
+      selServicio.value = preselected;
+      selServicio.dispatchEvent(new Event("change"));
+      localStorage.removeItem("selectedServiceId");
+    }
   }
 
-  /* =========  Fecha mínima (hoy)  ========= */
+  // Show duration info
+  selServicio?.addEventListener("change", () => {
+    const selected = selServicio.options[selServicio.selectedIndex];
+    if (selected && selected.dataset.duracion) {
+      durInfo.textContent = `⏱️ Duración estimada: ${selected.dataset.duracion} minutos`;
+    } else {
+      durInfo.textContent = "";
+    }
+    refreshHoras();
+  });
+
+  // Load user vehicle list
+  async function loadVehiculos() {
+    if (!selVehiculo) return;
+    try {
+      const res = await fetch(`${API_BASE}/vehiculos?usuario_id=${USER_ID}`);
+      const list = await res.json();
+      selVehiculo.innerHTML = '<option value="">Sin vehículo asignado</option>';
+      list.forEach((v) => {
+        const opt = document.createElement("option");
+        opt.value = v.id;
+        opt.textContent = `${v.dominio} – ${v.marca} ${v.modelo}`;
+        selVehiculo.appendChild(opt);
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   const todayISO = () => {
     const d = new Date();
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   };
   if (inputFecha) inputFecha.min = todayISO();
 
-  /* =========  Franjas horarias  ========= */
   const pad = (n) => String(n).padStart(2, "0");
-  // Cambiá el rango/intervalo a gusto: 9→18 hs, cada 30 min.
-  const generateTimeSlots = (startHour = 9, endHour = 18, intervalMin = 30) => {
-    const slots = [];
-    for (let h = startHour; h <= endHour; h++) {
-      for (let m = 0; m < 60; m += intervalMin) {
-        if (h === endHour && m > 0) break; // evita 18:30 si endHour=18
-        slots.push(`${pad(h)}:${pad(m)}`);
-      }
-    }
-    return slots;
-  };
 
-  const refreshHoras = () => {
+  async function refreshHoras() {
     selHora.innerHTML = "";
     selHora.disabled = true;
 
-    if (!ensureCatalogOrWarn()) return;
-
     const fecha = inputFecha.value;
-    const servicioId = selServicio.value ? Number(selServicio.value) : null;
+    const servicioId = selServicio.value;
     if (!fecha || !servicioId) {
-      selHora.innerHTML = `<option value="">Selecciona fecha y servicio...</option>`;
+      selHora.innerHTML =
+        '<option value="">Selecciona fecha y servicio...</option>';
       return;
     }
 
-    const baseSlots = generateTimeSlots(9, 18, 30);
-    const all = loadAllTurnos();
-    const ocupados = new Set(
-      all
-        .filter(t => t.fecha === fecha && Number(t.servicioId) === servicioId)
-        .map(t => t.hora)
-    );
+    try {
+      const res = await fetch(
+        `${API_BASE}/turnos/disponibles?fecha=${fecha}&servicio_id=${servicioId}`,
+      );
+      const slots = await res.json();
 
-    const today = todayISO();
-    const isToday = fecha === today;
-    const now = new Date();
-    const nowRounded = `${pad(now.getHours())}:${pad(now.getMinutes() - (now.getMinutes() % 30))}`;
+      const today = todayISO();
+      const isToday = fecha === today;
+      const now = new Date();
+      const nowStr = `${pad(now.getHours())}:${pad(now.getMinutes() - (now.getMinutes() % 30))}`;
 
-    const disponibles = baseSlots.filter(hhmm => {
-      if (ocupados.has(hhmm)) return false;
-      if (isToday && hhmm <= nowRounded) return false;
-      return true;
-    });
+      const disponibles = isToday ? slots.filter((h) => h > nowStr) : slots;
 
-    if (disponibles.length === 0) {
-      selHora.innerHTML = `<option value="">No hay horarios disponibles</option>`;
-      selHora.disabled = true;
-    } else {
-      selHora.innerHTML = `<option value="">Seleccionar horario...</option>`;
-      disponibles.forEach(h => {
-        const opt = document.createElement("option");
-        opt.value = h;
-        opt.textContent = h;
-        selHora.appendChild(opt);
-      });
-      selHora.disabled = false;
+      if (disponibles.length === 0) {
+        selHora.innerHTML =
+          '<option value="">No hay horarios disponibles</option>';
+      } else {
+        selHora.innerHTML = '<option value="">Seleccionar horario...</option>';
+        disponibles.forEach((h) => {
+          const opt = document.createElement("option");
+          opt.value = h;
+          opt.textContent = h;
+          selHora.appendChild(opt);
+        });
+        selHora.disabled = false;
+      }
+    } catch (err) {
+      console.error(err);
+      selHora.innerHTML = '<option value="">Error al cargar horarios</option>';
     }
-  };
+  }
 
-  selServicio?.addEventListener("change", refreshHoras);
   inputFecha?.addEventListener("change", refreshHoras);
 
-  /* =========  Tabla (solo mis turnos)  ========= */
-  const toDateTime = (fecha, hora) => new Date(`${fecha}T${hora || "00:00"}:00`);
-  const myTurnos = () => loadAllTurnos().filter(belongsToActiveUser);
-
-  const render = () => {
+  async function render() {
     if (!tbody) return;
-    const list = myTurnos().sort((a, b) => toDateTime(a.fecha, a.hora) - toDateTime(b.fecha, b.hora));
-    tbody.innerHTML = "";
+    try {
+      const res = await fetch(`${API_BASE}/turnos?usuario_id=${USER_ID}`);
+      const list = await res.json();
+      tbody.innerHTML = "";
 
-    if (list.length === 0) {
-      const tr = document.createElement("tr");
-      const td = document.createElement("td");
-      td.colSpan = 6;
-      td.textContent = "No hay turnos cargados.";
-      td.style.textAlign = "center";
-      tr.appendChild(td);
-      tbody.appendChild(tr);
-      return;
+      if (list.length === 0) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 6;
+        td.textContent = "No tenés turnos cargados.";
+        td.style.textAlign = "center";
+        td.style.color = "#999";
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+      }
+
+      list.forEach((t) => {
+        const estado = t.estado || "pendiente";
+        const badgeClass =
+          estado === "completado"
+            ? "badge-done"
+            : estado === "cancelado"
+              ? "badge-cancelled"
+              : estado === "confirmado"
+                ? "badge-confirmed"
+                : "badge-pending";
+        const showPresBtn = estado === "completado";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${t.id}</td>
+          <td>${t.fecha?.slice(0, 10) || "-"}</td>
+          <td>${t.hora?.slice(0, 5) || "-"}</td>
+          <td>${t.servicio_nombre || "-"}</td>
+          <td><span class="badge ${badgeClass}">${estado}</span></td>
+          <td class="actions">
+            ${showPresBtn ? `<button class="btn btn-outline sm" data-ver-presupuesto="${t.id}" title="Ver presupuesto">📄</button>` : ""}
+            <button data-del="${t.id}">Eliminar</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (err) {
+      console.error(err);
     }
+  }
 
-    const nameById = Object.fromEntries(loadCatalog().map(s => [String(s.id), s.name]));
-
-    list.forEach(t => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${t.id}</td>
-        <td>${t.fecha}</td>
-        <td>${t.hora}</td>
-        <td>${nameById[String(t.servicioId)] ?? t.servicio ?? "-"}</td>
-        <td>${t.cliente}</td>
-        <td class="actions">
-          <button data-del="${t.id}" title="Eliminar">Eliminar</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
-  };
-
-  /* =========  Crear turno  ========= */
-  const generateId = () =>
-    Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-
-  form?.addEventListener("submit", (e) => {
+  form?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    if (!ensureCatalogOrWarn()) {
-      alert("No hay servicios para reservar. Visitá la página de Servicios primero.");
-      return;
-    }
-
-    const servicioId = selServicio.value ? Number(selServicio.value) : null;
+    const servicio_id = selServicio.value ? Number(selServicio.value) : null;
+    const vehiculo_id = selVehiculo?.value ? Number(selVehiculo.value) : null;
     const fecha = inputFecha.value?.trim();
-    const hora  = selHora.value?.trim();
-    const cliente = document.getElementById("cliente")?.value?.trim();
+    const hora = selHora.value?.trim();
 
-    if (!servicioId || !fecha || !hora || !cliente) {
+    if (!servicio_id || !fecha || !hora) {
       alert("Completá todos los campos.");
       return;
     }
 
-    const all = loadAllTurnos();
-    const exists = all.some(t =>
-      Number(t.servicioId) === servicioId && t.fecha === fecha && t.hora === hora
-    );
-    if (exists) {
-      alert("Ese horario ya fue reservado para este servicio. Elegí otro horario.");
-      refreshHoras();
-      return;
-    }
+    try {
+      const res = await fetch(`${API_BASE}/turnos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fecha,
+          hora,
+          servicio_id,
+          vehiculo_id,
+          usuario_id: USER_ID,
+        }),
+      });
+      const data = await res.json();
 
-    const turno = {
-      id: generateId(),
-      servicioId,
-      fecha,
-      hora,
-      cliente,
-      userId: USER_ID,
-      userEmail: USER_EMAIL,
-      userName: USER_NAME,
-      createdAt: new Date().toISOString(),
-    };
-
-    all.push(turno);
-    saveAllTurnos(all);
-
-    form.reset();
-    selHora.innerHTML = `<option value="">Selecciona fecha y servicio...</option>`;
-    selHora.disabled = true;
-
-    render();
-  });
-
-  /* =========  Eliminar turno (solo propios)  ========= */
-  tbody?.addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-del]");
-    if (!btn) return;
-    const id = btn.getAttribute("data-del");
-
-    const all = loadAllTurnos();
-    const target = all.find(t => t.id === id);
-    if (!target || !belongsToActiveUser(target)) {
-      alert("No podés eliminar turnos de otros usuarios.");
-      return;
-    }
-
-    const remaining = all.filter(t => t.id !== id);
-    saveAllTurnos(remaining);
-
-    refreshHoras();
-    render();
-  });
-
-  /* =========  Primer render  ========= */
-  render();
-
-  /* =========  (Opcional) Reaccionar si el catálogo cambia en otra pestaña  ========= */
-  window.addEventListener("storage", (ev) => {
-    if (ev.key === STORAGE_KEY_SERVICES) {
-      catalog = loadCatalog();
-      if (ensureCatalogOrWarn()) {
-        populateServicios();
+      if (!res.ok) {
+        alert(data.error || "Error al crear el turno.");
         refreshHoras();
+        return;
       }
-    }
-    if (ev.key === STORAGE_KEY_TURNOS) {
+
+      form.reset();
+      durInfo.textContent = "";
+      selHora.innerHTML =
+        '<option value="">Selecciona fecha y servicio...</option>';
+      selHora.disabled = true;
       render();
-      refreshHoras();
+    } catch (err) {
+      alert("No se pudo conectar con el servidor.");
+      console.error(err);
     }
   });
+
+  tbody?.addEventListener("click", async (e) => {
+    // Delete button
+    const delBtn = e.target.closest("button[data-del]");
+    if (delBtn) {
+      const id = delBtn.getAttribute("data-del");
+      if (!confirm("¿Eliminar este turno?")) return;
+      try {
+        await fetch(`${API_BASE}/turnos/${id}`, { method: "DELETE" });
+        refreshHoras();
+        render();
+      } catch (err) {
+        console.error(err);
+      }
+      return;
+    }
+
+    // View presupuesto button
+    const presBtn = e.target.closest("button[data-ver-presupuesto]");
+    if (presBtn) {
+      const turnoId = presBtn.dataset.verPresupuesto;
+      await showPresupuestoCliente(turnoId);
+    }
+  });
+
+  /* ========== PRESUPUESTO VIEW FOR CLIENTS ========== */
+  const modalPC = document.getElementById("modalPresupuestoCliente");
+  const contentPC = document.getElementById("clientePresupuestoContent");
+  const btnCerrarPC = document.getElementById("btnCerrarPresCliente");
+  const btnPDFPC = document.getElementById("btnDownloadPDFCliente");
+
+  let clientePresData = null;
+
+  async function showPresupuestoCliente(turnoId) {
+    try {
+      const res = await fetch(`${API_BASE}/presupuestos/turno/${turnoId}`);
+      if (!res.ok) {
+        alert("No hay presupuesto disponible para este turno.");
+        return;
+      }
+      const { presupuesto_id } = await res.json();
+      const detRes = await fetch(`${API_BASE}/presupuestos/${presupuesto_id}`);
+      if (!detRes.ok) {
+        alert("Error al cargar presupuesto.");
+        return;
+      }
+
+      clientePresData = await detRes.json();
+      const p = clientePresData;
+
+      let total = 0;
+      const rowsHtml = p.items
+        .map((item) => {
+          const sub = item.cantidad * parseFloat(item.precio_unitario);
+          total += sub;
+          return `<tr>
+          <td>${escT(item.descripcion)}</td>
+          <td style="text-align:center;">${item.cantidad}</td>
+          <td style="text-align:right;">$${parseFloat(item.precio_unitario).toFixed(2)}</td>
+          <td style="text-align:right;font-weight:600;">$${sub.toFixed(2)}</td>
+        </tr>`;
+        })
+        .join("");
+
+      contentPC.innerHTML = `
+        <div style="padding:10px 14px;background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.15);border-radius:10px;margin-bottom:14px;">
+          <strong style="color:var(--accent);font-size:1.1rem;">${escT(p.dominio || "")}</strong>
+          <span style="margin-left:10px;">${escT(p.marca || "")} ${escT(p.modelo || "")} ${p.anio || ""}</span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
+          <thead>
+            <tr style="background:rgba(220,38,38,0.1);">
+              <th style="padding:8px 10px;text-align:left;color:var(--accent);font-size:0.78rem;text-transform:uppercase;">Descripción</th>
+              <th style="padding:8px 10px;text-align:center;color:var(--accent);font-size:0.78rem;text-transform:uppercase;">Cant.</th>
+              <th style="padding:8px 10px;text-align:right;color:var(--accent);font-size:0.78rem;text-transform:uppercase;">Precio</th>
+              <th style="padding:8px 10px;text-align:right;color:var(--accent);font-size:0.78rem;text-transform:uppercase;">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" style="text-align:right;font-weight:700;padding:10px;">TOTAL</td>
+              <td style="text-align:right;font-weight:800;color:var(--accent);padding:10px;font-size:1.1rem;">$${total.toFixed(2)}</td>
+            </tr>
+          </tfoot>
+        </table>
+        ${p.observaciones ? `<p class="muted" style="margin-top:12px;font-style:italic;">📝 ${escT(p.observaciones)}</p>` : ""}
+      `;
+
+      modalPC.classList.add("active");
+    } catch (err) {
+      console.error(err);
+      alert("Error al cargar presupuesto.");
+    }
+  }
+
+  function escT(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  btnCerrarPC?.addEventListener("click", () =>
+    modalPC.classList.remove("active"),
+  );
+  modalPC?.addEventListener("click", (e) => {
+    if (e.target === modalPC) modalPC.classList.remove("active");
+  });
+
+  btnPDFPC?.addEventListener("click", () => {
+    if (!clientePresData) return;
+    const { jsPDF } = window.jspdf;
+    if (!jsPDF) {
+      alert("Error: jsPDF no cargó.");
+      return;
+    }
+
+    const p = clientePresData;
+    const doc = new jsPDF();
+    const pageW = doc.internal.pageSize.getWidth();
+    let y = 20;
+
+    doc.setFillColor(220, 38, 38);
+    doc.rect(0, 0, pageW, 40, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("TURNERS", 14, 18);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("Presupuesto de Servicio", 14, 28);
+    doc.text(
+      `Fecha: ${p.fecha?.slice(0, 10) || new Date().toLocaleDateString("es-AR")}`,
+      14,
+      35,
+    );
+
+    y = 52;
+    doc.setTextColor(50, 50, 50);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text(
+      `Vehículo: ${p.dominio || ""} – ${p.marca || ""} ${p.modelo || ""}`,
+      14,
+      y,
+    );
+    y += 14;
+
+    doc.setFillColor(40, 40, 40);
+    doc.rect(14, y, pageW - 28, 10, "F");
+    doc.setTextColor(255);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text("DESCRIPCIÓN", 16, y + 7);
+    doc.text("CANT.", 110, y + 7);
+    doc.text("P. UNIT.", 130, y + 7);
+    doc.text("SUBTOTAL", 160, y + 7);
+    y += 14;
+
+    doc.setTextColor(60);
+    doc.setFont("helvetica", "normal");
+    let total = 0;
+    p.items.forEach((item) => {
+      const sub = item.cantidad * parseFloat(item.precio_unitario);
+      total += sub;
+      doc.text(item.descripcion.substring(0, 50), 16, y);
+      doc.text(String(item.cantidad), 114, y);
+      doc.text(`$${parseFloat(item.precio_unitario).toFixed(2)}`, 130, y);
+      doc.text(`$${sub.toFixed(2)}`, 160, y);
+      doc.setDrawColor(200);
+      doc.line(14, y + 3, pageW - 14, y + 3);
+      y += 9;
+      if (y > 270) {
+        doc.addPage();
+        y = 20;
+      }
+    });
+
+    y += 4;
+    doc.setFillColor(220, 38, 38);
+    doc.rect(130, y - 5, pageW - 144, 12, "F");
+    doc.setTextColor(255);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text(`TOTAL: $${total.toFixed(2)}`, 134, y + 3);
+
+    if (p.observaciones) {
+      y += 20;
+      doc.setTextColor(80);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "italic");
+      doc.text(`Obs: ${p.observaciones}`, 14, y);
+    }
+
+    y = doc.internal.pageSize.getHeight() - 15;
+    doc.setTextColor(150);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(
+      "Turners – Taller Mecánico | Av. San Martín 123, Mendoza | (261) 444-5566",
+      14,
+      y,
+    );
+
+    doc.save(`presupuesto_turners_${p.id || Date.now()}.pdf`);
+  });
+
+  loadCatalog();
+  loadVehiculos();
+  render();
 });

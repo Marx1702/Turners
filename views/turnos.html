@@ -3,21 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Turnos</title>
+  <title>Turnos – Turners</title>
   <link rel="stylesheet" href="../styles/body.css" />
   <link rel="stylesheet" href="../styles/turnos.css" />
+  <script src="../scripts/jspdf.umd.min.js" defer></script>
   <script src="../scripts/navbar.js" defer></script>
   <script src="../scripts/turnos.js" defer></script>
-  
 </head>
 <body>
 
-  <!-- Navbar (sin "Turnos" estático; lo maneja navbar.js según sesión) -->
   <nav class="navbar">
     <a href="index.html" class="logo" aria-label="Ir al inicio">
-    <img src="../assets/images/turners.png" alt="Turners" class="logo-img">
-  </a>
-    <div class="nav-left logo">Turners</div>
+      <img src="../assets/images/turners.png" alt="Turners" class="logo-img">
+    </a>
     <button class="menu-toggle" id="menuToggle">&#9776;</button>
     <ul class="nav-links" id="navLinks">
       <li><a href="index.html">Inicio</a></li>
@@ -27,17 +25,25 @@
   </nav>
 
   <main class="container">
-    <h1>Gestión de Turnos</h1>
+    <h1>Mis Turnos</h1>
 
     <!-- Crear turno -->
     <section class="card" aria-labelledby="crear-turno">
-      <h2 id="crear-turno">Nuevo turno</h2>
+      <h2 id="crear-turno" style="margin-bottom:16px; font-size:1.2rem;">Nuevo turno</h2>
 
       <form id="turnoForm" class="form-turnos">
         <div class="field field--servicio">
           <label for="servicio">Servicio</label>
           <select id="servicio" required>
-            <option value="">Seleccionar servicio...</option>
+            <option value="">Cargando...</option>
+          </select>
+          <small class="muted" id="duracionInfo"></small>
+        </div>
+
+        <div class="field field--vehiculo">
+          <label for="vehiculo">Vehículo</label>
+          <select id="vehiculo">
+            <option value="">Sin vehículo asignado</option>
           </select>
         </div>
 
@@ -53,21 +59,16 @@
           </select>
         </div>
 
-        <div class="field field--cliente">
-          <label for="cliente">Cliente</label>
-          <input type="text" id="cliente" placeholder="Tu nombre" required />
-        </div>
-
         <div class="field field--btn">
           <button type="submit">Guardar turno</button>
         </div>
       </form>
 
-      <p class="muted" id="usuarioActual"></p>
+      <p class="muted mt-1" id="usuarioActual"></p>
     </section>
 
     <!-- Tabla -->
-    <section class="table-wrap card" style="margin-top:1rem">
+    <section class="table-wrap card mt-1">
       <table aria-describedby="subtitulo-turnos">
         <caption id="subtitulo-turnos" class="muted" style="caption-side: bottom; padding-top:.5rem;">
           Solo se muestran tus turnos.
@@ -78,7 +79,7 @@
             <th>Fecha</th>
             <th>Hora</th>
             <th>Servicio</th>
-            <th>Cliente</th>
+            <th>Estado</th>
             <th class="actions">Acciones</th>
           </tr>
         </thead>
@@ -86,11 +87,20 @@
       </table>
     </section>
   </main>
-  <!-- Footer -->
+
+  <!-- Modal Presupuesto (read-only for clients) -->
+  <div class="modal-overlay" id="modalPresupuestoCliente">
+    <div class="modal" style="width:90%;max-width:620px;">
+      <h2 style="margin-bottom:16px;">📄 Presupuesto</h2>
+      <div id="clientePresupuestoContent"></div>
+      <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
+        <button class="btn btn-outline sm" id="btnCerrarPresCliente">Cerrar</button>
+        <button class="btn btn-primary sm" id="btnDownloadPDFCliente">📥 Descargar PDF</button>
+      </div>
+    </div>
+  </div>
+
   <div id="footer"></div>
   <script src="../scripts/footer.js"></script>
-</body>
-</html>
-
 </body>
 </html>

@@ -1,54 +1,61 @@
-// Cargar usuarios desde localStorage
-const users = JSON.parse(localStorage.getItem("users")) || [];
-
-/* ========== Notificaciones ========== */
+// scripts/login.js – Role-based redirect
 function showToast(message, type = "info") {
-  const bg = {
-    success: "linear-gradient(to right, #00b09b, #96c93d)",
-    error:   "linear-gradient(to right, #ff5f6d, #ffc371)",
-    info:    "linear-gradient(to right, #2193b0, #6dd5ed)"
-  }[type] || "linear-gradient(to right, #2193b0, #6dd5ed)";
-
-  Toastify({
-    text: message,
-    duration: 3000,
-    close: true,
-    gravity: "top",
-    position: "right",
-    stopOnFocus: true,
-    style: { background: bg, borderRadius: "8px", fontSize: "0.9rem" }
-  }).showToast();
-}
-
-/* ========== Login ========== */
-function loginUser(userFound) { 
-  if (userFound) {
-    showToast(`Bienvenido, ${userFound.nombre}`, "success");
-    localStorage.setItem("activeUser", JSON.stringify(userFound));
-    // redirección después de mostrar el toast
-    setTimeout(() => {
-      window.location.href = "../views/index.html"; 
-    }, 900);
-  } else {
-    showToast("Correo o contraseña incorrectos.", "error");
+  let container = document.querySelector(".toast-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.className = "toast-container";
+    document.body.appendChild(container);
   }
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector("form");
   if (!form) return;
 
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const email = document.getElementById("email").value.trim().toLowerCase();
     const password = document.getElementById("password").value;
 
-    // buscar usuario en localStorage
-    const userFound = users.find(
-      user => String(user.email).toLowerCase() === email && user.password === password
-    );
+    if (!email || !password) {
+      showToast("Completá todos los campos.", "error");
+      return;
+    }
 
-    loginUser(userFound);
+    try {
+      const res = await fetch("http://localhost:3001/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showToast(data.error || "Error al iniciar sesión.", "error");
+        return;
+      }
+
+      // Save session with role
+      localStorage.setItem("activeUser", JSON.stringify(data.user));
+      showToast(`Bienvenido, ${data.user.nombre}`, "success");
+
+      setTimeout(() => {
+        // Redirect based on role
+        if (data.user.rol === "admin") {
+          window.location.href = "dashboard.html";
+        } else {
+          window.location.href = "index.html";
+        }
+      }, 900);
+    } catch (err) {
+      showToast("No se pudo conectar con el servidor.", "error");
+      console.error(err);
+    }
   });
 });
