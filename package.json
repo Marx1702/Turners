@@ -1,0 +1,16 @@
+{
+  "name": "turners",
+  "version": "1.0.0",
+  "description": "NS Motors – Sistema de gestión de turnos",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node --watch backend/server.js",
+    "install-backend": "cd backend && npm install",
+    "postinstall": "cd backend && npm install",
+    "init-db": "node backend/db/init.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
