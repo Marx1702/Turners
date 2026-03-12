@@ -12,7 +12,12 @@ app.use(cors());
 app.use(express.json());
 
 /* ── Servir archivos estáticos del frontend ── */
-app.use(express.static(path.join(__dirname, "..")));
+const fs = require("fs");
+const publicHtml = path.join(__dirname, "..", "public_html");
+const parentDir = path.join(__dirname, "..");
+const staticRoot = fs.existsSync(publicHtml) ? publicHtml : parentDir;
+console.log("📂 Sirviendo estáticos desde:", staticRoot);
+app.use(express.static(staticRoot));
 
 /* ── Rutas API ── */
 app.use("/api/auth", require("./routes/auth"));
