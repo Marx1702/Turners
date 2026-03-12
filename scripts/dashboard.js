@@ -633,102 +633,139 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const doc = new jsPDF();
-    const pageW = doc.internal.pageSize.getWidth();
-    let y = 20;
+    // Load logo and generate PDF
+    const logoImg = new Image();
+    logoImg.crossOrigin = "anonymous";
+    logoImg.onload = function () {
+      // Convert to base64 via canvas
+      const canvas = document.createElement("canvas");
+      canvas.width = logoImg.naturalWidth;
+      canvas.height = logoImg.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(logoImg, 0, 0);
+      const logoBase64 = canvas.toDataURL("image/png");
 
-    // Header
-    doc.setFillColor(220, 38, 38);
-    doc.rect(0, 0, pageW, 40, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
-    doc.setFont("helvetica", "bold");
-    doc.text("TURNERS", 14, 18);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text("Presupuesto de Servicio", 14, 28);
-    doc.text(`Fecha: ${new Date().toLocaleDateString("es-AR")}`, 14, 35);
+      buildPDF(logoBase64);
+    };
+    logoImg.onerror = function () {
+      // Generate PDF without logo if load fails
+      buildPDF(null);
+    };
+    logoImg.src = "../images/logo.png";
 
-    // Vehicle info
-    y = 52;
-    doc.setTextColor(50, 50, 50);
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
+    function buildPDF(logoBase64) {
+      const doc = new jsPDF();
+      const pageW = doc.internal.pageSize.getWidth();
+      let y = 20;
 
-    const infoBlock = pInfoBlock.textContent.trim();
-    if (infoBlock) {
-      doc.text("Vehículo / Cliente:", 14, y);
-      doc.setFont("helvetica", "normal");
-      doc.text(infoBlock, 14, y + 7);
-      y += 20;
-    }
+      // Header bar
+      doc.setFillColor(220, 38, 38);
+      doc.rect(0, 0, pageW, 40, "F");
 
-    // Table header
-    doc.setFillColor(40, 40, 40);
-    doc.rect(14, y, pageW - 28, 10, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.text("DESCRIPCIÓN", 16, y + 7);
-    doc.text("CANT.", 110, y + 7);
-    doc.text("P. UNIT.", 130, y + 7);
-    doc.text("SUBTOTAL", 160, y + 7);
-    y += 14;
-
-    // Table rows
-    doc.setTextColor(60, 60, 60);
-    doc.setFont("helvetica", "normal");
-    let grandTotal = 0;
-    items.forEach((item) => {
-      const subtotal = item.cantidad * item.precio_unitario;
-      grandTotal += subtotal;
-      doc.text(item.descripcion.substring(0, 50), 16, y);
-      doc.text(String(item.cantidad), 114, y);
-      doc.text(`$${item.precio_unitario.toFixed(2)}`, 130, y);
-      doc.text(`$${subtotal.toFixed(2)}`, 160, y);
-
-      // Divider line
-      doc.setDrawColor(200, 200, 200);
-      doc.line(14, y + 3, pageW - 14, y + 3);
-      y += 9;
-
-      if (y > 270) {
-        doc.addPage();
-        y = 20;
+      // Logo
+      if (logoBase64) {
+        try {
+          doc.addImage(logoBase64, "PNG", 14, 4, 32, 32);
+        } catch (e) {
+          console.warn("Logo no se pudo agregar al PDF:", e);
+        }
       }
-    });
 
-    // Total
-    y += 4;
-    doc.setFillColor(220, 38, 38);
-    doc.rect(130, y - 5, pageW - 144, 12, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text(`TOTAL: $${grandTotal.toFixed(2)}`, 134, y + 3);
-
-    // Observations
-    const obs = document.getElementById("pObservaciones").value.trim();
-    if (obs) {
-      y += 20;
-      doc.setTextColor(80, 80, 80);
+      // Brand text
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(22);
+      doc.setFont("helvetica", "bold");
+      doc.text("NS MOTORS", logoBase64 ? 50 : 14, 18);
       doc.setFontSize(10);
-      doc.setFont("helvetica", "italic");
-      doc.text(`Obs: ${obs}`, 14, y);
+      doc.setFont("helvetica", "normal");
+      doc.text("Presupuesto de Servicio", logoBase64 ? 50 : 14, 28);
+      doc.text(
+        `Fecha: ${new Date().toLocaleDateString("es-AR")}`,
+        logoBase64 ? 50 : 14,
+        35,
+      );
+
+      // Vehicle info
+      y = 52;
+      doc.setTextColor(50, 50, 50);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+
+      const infoBlock = pInfoBlock.textContent.trim();
+      if (infoBlock) {
+        doc.text("Vehículo / Cliente:", 14, y);
+        doc.setFont("helvetica", "normal");
+        doc.text(infoBlock, 14, y + 7);
+        y += 20;
+      }
+
+      // Table header
+      doc.setFillColor(40, 40, 40);
+      doc.rect(14, y, pageW - 28, 10, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.text("DESCRIPCIÓN", 16, y + 7);
+      doc.text("CANT.", 110, y + 7);
+      doc.text("P. UNIT.", 130, y + 7);
+      doc.text("SUBTOTAL", 160, y + 7);
+      y += 14;
+
+      // Table rows
+      doc.setTextColor(60, 60, 60);
+      doc.setFont("helvetica", "normal");
+      let grandTotal = 0;
+      items.forEach((item) => {
+        const subtotal = item.cantidad * item.precio_unitario;
+        grandTotal += subtotal;
+        doc.text(item.descripcion.substring(0, 50), 16, y);
+        doc.text(String(item.cantidad), 114, y);
+        doc.text(`$${item.precio_unitario.toFixed(2)}`, 130, y);
+        doc.text(`$${subtotal.toFixed(2)}`, 160, y);
+
+        // Divider line
+        doc.setDrawColor(200, 200, 200);
+        doc.line(14, y + 3, pageW - 14, y + 3);
+        y += 9;
+
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+      });
+
+      // Total
+      y += 4;
+      doc.setFillColor(220, 38, 38);
+      doc.rect(130, y - 5, pageW - 144, 12, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text(`TOTAL: $${grandTotal.toFixed(2)}`, 134, y + 3);
+
+      // Observations
+      const obs = document.getElementById("pObservaciones").value.trim();
+      if (obs) {
+        y += 20;
+        doc.setTextColor(80, 80, 80);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "italic");
+        doc.text(`Obs: ${obs}`, 14, y);
+      }
+
+      // Footer
+      y = doc.internal.pageSize.getHeight() - 15;
+      doc.setTextColor(150, 150, 150);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        "NS Motors – Taller Mecánico | Av. San Martín 123, Mendoza | (261) 444-5566",
+        14,
+        y,
+      );
+
+      doc.save(`presupuesto_nsmotors_${Date.now()}.pdf`);
     }
-
-    // Footer
-    y = doc.internal.pageSize.getHeight() - 15;
-    doc.setTextColor(150, 150, 150);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.text(
-      "Turners – Taller Mecánico | Av. San Martín 123, Mendoza | (261) 444-5566",
-      14,
-      y,
-    );
-
-    doc.save(`presupuesto_turners_${Date.now()}.pdf`);
   }
 
   /* ========== CLIENTES TABLE ========== */
@@ -866,8 +903,245 @@ document.addEventListener("DOMContentLoaded", () => {
     if (goto) window.location.href = goto;
   });
 
+  /* ========== SERVICIOS CRUD ========== */
+  const serviciosBody = document.getElementById("serviciosBody");
+  const modalServicio = document.getElementById("modalServicio");
+  const formServicio = document.getElementById("formServicio");
+  const btnNuevoServicio = document.getElementById("btnNuevoServicio");
+  const btnCancelServicio = document.getElementById("btnCancelServicio");
+
+  async function loadServiciosList() {
+    if (!serviciosBody) return;
+    try {
+      const res = await fetch(`${API}/servicios`);
+      const servicios = await res.json();
+      serviciosBody.innerHTML = "";
+      if (servicios.length === 0) {
+        serviciosBody.innerHTML =
+          '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No hay servicios cargados.</td></tr>';
+        return;
+      }
+      servicios.forEach((s) => {
+        const precio =
+          s.precio != null
+            ? `$${Number(s.precio).toLocaleString("es-AR")}`
+            : "-";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><strong>${esc(s.nombre)}</strong></td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(s.descripcion || "-")}</td>
+          <td>${s.duracion_min || "-"} min</td>
+          <td>${precio}</td>
+          <td style="font-size:0.75rem;color:var(--text-muted);">${esc(s.imagen || "-")}</td>
+          <td>
+            <button class="btn btn-outline sm svc-edit" data-id="${s.id}">✏️</button>
+            <button class="btn btn-outline sm svc-delete" data-id="${s.id}" style="border-color:#ef4444;color:#ef4444;">🗑️</button>
+          </td>
+        `;
+        serviciosBody.appendChild(tr);
+      });
+    } catch (err) {
+      console.error("Error loading servicios:", err);
+    }
+  }
+
+  function openServicioModal(servicio = null) {
+    if (!modalServicio) return;
+    const title = document.getElementById("servicioModalTitle");
+    const preview = document.getElementById("svcImgPreview");
+    const content = document.getElementById("svcDropzoneContent");
+
+    document.getElementById("svcId").value = servicio ? servicio.id : "";
+    document.getElementById("svcNombre").value = servicio
+      ? servicio.nombre
+      : "";
+    document.getElementById("svcDescripcion").value = servicio
+      ? servicio.descripcion || ""
+      : "";
+    document.getElementById("svcDuracion").value = servicio
+      ? servicio.duracion_min || 30
+      : 30;
+    document.getElementById("svcPrecio").value = servicio
+      ? servicio.precio || 0
+      : 0;
+    document.getElementById("svcImagen").value = servicio
+      ? servicio.imagen || ""
+      : "";
+
+    // Show image preview if editing and has image
+    if (servicio && servicio.imagen) {
+      preview.src = `../assets/images/services/${servicio.imagen}`;
+      preview.style.display = "block";
+      content.style.display = "none";
+    } else {
+      preview.style.display = "none";
+      preview.src = "";
+      content.style.display = "flex";
+    }
+
+    title.textContent = servicio ? "Editar Servicio" : "Nuevo Servicio";
+    modalServicio.classList.add("active");
+  }
+
+  // Dropzone logic
+  const dropzone = document.getElementById("svcDropzone");
+  const fileInput = document.getElementById("svcFileInput");
+  const imgPreview = document.getElementById("svcImgPreview");
+  const dropContent = document.getElementById("svcDropzoneContent");
+
+  if (dropzone && fileInput) {
+    // Click to browse
+    dropzone.addEventListener("click", () => fileInput.click());
+
+    // Drag events
+    dropzone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropzone.classList.add("dragover");
+    });
+    dropzone.addEventListener("dragleave", () => {
+      dropzone.classList.remove("dragover");
+    });
+    dropzone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropzone.classList.remove("dragover");
+      if (e.dataTransfer.files.length)
+        handleFileUpload(e.dataTransfer.files[0]);
+    });
+
+    // File input change
+    fileInput.addEventListener("change", () => {
+      if (fileInput.files.length) handleFileUpload(fileInput.files[0]);
+    });
+  }
+
+  async function handleFileUpload(file) {
+    if (!file.type.startsWith("image/")) {
+      alert("Solo se permiten imágenes.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert("La imagen no debe superar los 5MB.");
+      return;
+    }
+
+    // Show local preview immediately
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      imgPreview.src = e.target.result;
+      imgPreview.style.display = "block";
+      dropContent.style.display = "none";
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to server
+    const formData = new FormData();
+    formData.append("imagen", file);
+    try {
+      const res = await fetch(`${API}/servicios/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok) {
+        document.getElementById("svcImagen").value = data.filename;
+      } else {
+        alert(data.error || "Error al subir la imagen.");
+      }
+    } catch {
+      alert("Error de conexión al subir imagen.");
+    }
+  }
+
+  if (btnNuevoServicio) {
+    btnNuevoServicio.addEventListener("click", () => openServicioModal());
+  }
+  if (btnCancelServicio) {
+    btnCancelServicio.addEventListener("click", () => {
+      modalServicio.classList.remove("active");
+    });
+  }
+
+  // Save (create/edit)
+  if (formServicio) {
+    formServicio.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("svcId").value;
+      const body = {
+        nombre: document.getElementById("svcNombre").value.trim(),
+        descripcion: document.getElementById("svcDescripcion").value.trim(),
+        duracion_min:
+          Number(document.getElementById("svcDuracion").value) || 30,
+        precio: Number(document.getElementById("svcPrecio").value) || 0,
+        imagen: document.getElementById("svcImagen").value.trim() || null,
+      };
+      if (!body.nombre) {
+        alert("El nombre es obligatorio.");
+        return;
+      }
+
+      try {
+        const url = id ? `${API}/servicios/${id}` : `${API}/servicios`;
+        const method = id ? "PUT" : "POST";
+        const res = await fetch(url, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          const d = await res.json();
+          alert(d.error || "Error al guardar.");
+          return;
+        }
+        modalServicio.classList.remove("active");
+        loadServiciosList();
+        alert(id ? "✅ Servicio actualizado." : "✅ Servicio creado.");
+      } catch {
+        alert("Error de conexión.");
+      }
+    });
+  }
+
+  // Edit / Delete via event delegation on table
+  if (serviciosBody) {
+    serviciosBody.addEventListener("click", async (e) => {
+      const editBtn = e.target.closest(".svc-edit");
+      const deleteBtn = e.target.closest(".svc-delete");
+
+      if (editBtn) {
+        const id = editBtn.dataset.id;
+        try {
+          const res = await fetch(`${API}/servicios/${id}`);
+          const servicio = await res.json();
+          openServicioModal(servicio);
+        } catch {
+          alert("Error al cargar servicio.");
+        }
+      }
+
+      if (deleteBtn) {
+        const id = deleteBtn.dataset.id;
+        if (!confirm("¿Eliminar este servicio?")) return;
+        try {
+          const res = await fetch(`${API}/servicios/${id}`, {
+            method: "DELETE",
+          });
+          if (!res.ok) {
+            const d = await res.json();
+            alert(d.error || "Error al eliminar.");
+            return;
+          }
+          loadServiciosList();
+          alert("✅ Servicio eliminado.");
+        } catch {
+          alert("Error de conexión.");
+        }
+      }
+    });
+  }
+
   /* ========== INIT ========== */
   loadServicios();
+  loadServiciosList();
   loadStats();
   loadBloqueos();
   loadRendimiento();

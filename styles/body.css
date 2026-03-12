@@ -90,16 +90,31 @@ ul {
 .navbar .logo {
   display: flex;
   align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+.navbar .brand-name {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #ef4444, #fff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 .navbar .logo-img {
-  height: 44px;
+  height: 54px;
   width: auto;
+  max-width: 140px;
   cursor: pointer;
-  filter: drop-shadow(0 0 8px var(--accent-glow));
-  transition: filter var(--transition);
+  border-radius: 8px;
+  object-fit: cover;
+  object-position: center;
+  transition: all 0.3s ease;
 }
 .navbar .logo-img:hover {
-  filter: drop-shadow(0 0 14px var(--accent-glow));
+  transform: scale(1.08);
+  filter: brightness(1.15);
 }
 
 .nav-links {
@@ -186,6 +201,11 @@ ul {
 /* ============================================
    HERO
    ============================================ */
+@keyframes heroFadeUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .hero {
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;
@@ -194,6 +214,13 @@ ul {
   padding: 80px 40px 60px;
   max-width: 1200px;
   margin: 0 auto;
+  animation: heroFadeUp 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.hero__content {
+  animation: heroFadeUp 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+.hero__media {
+  animation: heroFadeUp 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
 }
 
 .hero__content h1 {
@@ -272,14 +299,24 @@ ul {
   align-items: center;
   margin-top: 64px;
   opacity: 0;
-  transform: translateY(30px);
-  transition:
-    opacity 0.6s ease,
-    transform 0.6s ease;
+  transition: none;
 }
+
+/* Odd features: slide in from left */
+.feature:nth-child(odd) {
+  transform: translateX(-90px);
+}
+/* Even features: slide in from right */
+.feature:nth-child(even) {
+  transform: translateX(90px);
+}
+
 .feature.in-view {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateX(0);
+  transition:
+    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .feature .feature__text {

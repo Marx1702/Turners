@@ -335,3 +335,39 @@
   .bloqueo-form { grid-template-columns: 1fr; }
   .rendimiento-kpis { grid-template-columns: 1fr 1fr; }
 }
+
+/* ============================================
+   DROPZONE – Image Upload
+   ============================================ */
+.dropzone {
+  border: 2px dashed rgba(255,255,255,0.15);
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  background: rgba(255,255,255,0.03);
+  position: relative;
+  min-height: 100px;
+}
+.dropzone:hover,
+.dropzone.dragover {
+  border-color: #ef4444;
+  background: rgba(220, 38, 38, 0.08);
+}
+.dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+}
+.dropzone-content p { margin: 0; font-size: 0.9rem; }
+.dropzone-content small { font-size: 0.75rem; color: #666; }
+.dropzone-icon { font-size: 2rem; }
+.dropzone-preview {
+  max-height: 120px;
+  max-width: 100%;
+  border-radius: 8px;
+  object-fit: contain;
+}

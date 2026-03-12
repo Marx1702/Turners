@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard Admin – Turners</title>
+  <title>Dashboard Admin – NS Motors</title>
   <link rel="stylesheet" href="../styles/body.css" />
   <link rel="stylesheet" href="../styles/dashboard.css" />
   <script src="../scripts/jspdf.umd.min.js" defer></script>
@@ -14,7 +14,7 @@
 
   <nav class="navbar">
     <a href="index.html" class="logo" aria-label="Ir al inicio">
-      <img src="../assets/images/turners.png" alt="Turners" class="logo-img">
+      <img src="../images/logo.png" alt="NS Motors" class="logo-img"><span class="brand-name">NS Motors</span>
     </a>
     <button class="menu-toggle" id="menuToggle">&#9776;</button>
     <ul class="nav-links" id="navLinks">
@@ -102,6 +102,74 @@
         </div>
       </div>
     </section>
+
+    <!-- Gestión de Servicios -->
+    <section class="dash-section">
+      <div class="dash-section-header">
+        <h2>🛠️ Gestión de Servicios</h2>
+        <button class="btn btn-primary sm" id="btnNuevoServicio">+ Nuevo Servicio</button>
+      </div>
+      <div class="card">
+        <table class="dash-table" id="serviciosTable">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th>Duración</th>
+              <th>Precio</th>
+              <th>Imagen</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="serviciosBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Modal Servicio -->
+    <div class="modal-overlay" id="modalServicio">
+      <div class="modal">
+        <h2 id="servicioModalTitle">Nuevo Servicio</h2>
+        <form id="formServicio">
+          <input type="hidden" id="svcId" />
+          <div class="form-group">
+            <label for="svcNombre">Nombre</label>
+            <input type="text" id="svcNombre" required placeholder="Ej: Cambio de aceite" />
+          </div>
+          <div class="form-group">
+            <label for="svcDescripcion">Descripción</label>
+            <textarea id="svcDescripcion" rows="3" placeholder="Describí el servicio..."></textarea>
+          </div>
+          <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-group">
+              <label for="svcDuracion">Duración (min)</label>
+              <input type="number" id="svcDuracion" value="30" min="5" />
+            </div>
+            <div class="form-group">
+              <label for="svcPrecio">Precio ($)</label>
+              <input type="number" id="svcPrecio" value="0" min="0" step="0.01" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Imagen del servicio</label>
+            <input type="hidden" id="svcImagen" />
+            <div class="dropzone" id="svcDropzone">
+              <input type="file" id="svcFileInput" accept="image/*" style="display:none;" />
+              <div class="dropzone-content" id="svcDropzoneContent">
+                <span class="dropzone-icon">📷</span>
+                <p>Arrastrá una imagen aquí o <strong>hacé clic</strong></p>
+                <small>JPG, PNG, WebP — máx. 5MB</small>
+              </div>
+              <img id="svcImgPreview" class="dropzone-preview" style="display:none;" alt="Preview" />
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-outline sm" id="btnCancelServicio">Cancelar</button>
+            <button type="submit" class="btn btn-primary sm">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <!-- Gestión de Disponibilidad -->
     <section class="dash-section">
