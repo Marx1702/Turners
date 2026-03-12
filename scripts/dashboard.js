@@ -621,42 +621,54 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* ========== PDF EXPORT ========== */
   function exportPresupuestoPDF() {
-    const { jsPDF } = window.jspdf;
-    if (!jsPDF) {
-      alert("Error: jsPDF no cargó. Recargá la página.");
-      return;
+    try {
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        alert("Error: jsPDF no cargó. Recargá la página.");
+        return;
+      }
+
+      var items = getItems();
+      if (items.length === 0) {
+        alert("Agregá al menos un ítem para exportar.");
+        return;
+      }
+
+      var infoText = pInfoBlock ? pInfoBlock.textContent.trim() : "";
+      var obsEl = document.getElementById("pObservaciones");
+      var obs = obsEl ? obsEl.value.trim() : "";
+
+      // Load logo first, then generate PDF
+      var logoImg = new Image();
+      logoImg.onload = function () {
+        try {
+          var canvas = document.createElement("canvas");
+          canvas.width = logoImg.naturalWidth;
+          canvas.height = logoImg.naturalHeight;
+          canvas.getContext("2d").drawImage(logoImg, 0, 0);
+          var logoBase64 = canvas.toDataURL("image/png");
+          generarPDF(items, infoText, obs, logoBase64);
+        } catch (e) {
+          console.warn("Error procesando logo:", e);
+          generarPDF(items, infoText, obs, null);
+        }
+      };
+      logoImg.onerror = function () {
+        console.warn("No se pudo cargar el logo");
+        generarPDF(items, infoText, obs, null);
+      };
+      logoImg.src = "../images/logo.png";
+    } catch (err) {
+      console.error("Error exportando PDF:", err);
+      alert("Error al exportar el PDF: " + err.message);
     }
+  }
 
-    const items = getItems();
-    if (items.length === 0) {
-      alert("Agregá al menos un ítem para exportar.");
-      return;
-    }
-
-    // Load logo and generate PDF
-    const logoImg = new Image();
-    logoImg.crossOrigin = "anonymous";
-    logoImg.onload = function () {
-      // Convert to base64 via canvas
-      const canvas = document.createElement("canvas");
-      canvas.width = logoImg.naturalWidth;
-      canvas.height = logoImg.naturalHeight;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(logoImg, 0, 0);
-      const logoBase64 = canvas.toDataURL("image/png");
-
-      buildPDF(logoBase64);
-    };
-    logoImg.onerror = function () {
-      // Generate PDF without logo if load fails
-      buildPDF(null);
-    };
-    logoImg.src = "../images/logo.png";
-
-    function buildPDF(logoBase64) {
-      const doc = new jsPDF();
-      const pageW = doc.internal.pageSize.getWidth();
-      let y = 20;
+  function generarPDF(items, infoText, obs, logoBase64) {
+    try {
+      var doc = new window.jspdf.jsPDF();
+      var pageW = doc.internal.pageSize.getWidth();
+      var y = 20;
+      var textX = 14;
 
       // Header bar
       doc.setFillColor(220, 38, 38);
@@ -666,6 +678,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (logoBase64) {
         try {
           doc.addImage(logoBase64, "PNG", 14, 4, 32, 32);
+          textX = 50;
         } catch (e) {
           console.warn("Logo no se pudo agregar al PDF:", e);
         }
@@ -675,13 +688,13 @@ document.addEventListener("DOMContentLoaded", () => {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(22);
       doc.setFont("helvetica", "bold");
-      doc.text("NS MOTORS", logoBase64 ? 50 : 14, 18);
+      doc.text("NS MOTORS", textX, 18);
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
-      doc.text("Presupuesto de Servicio", logoBase64 ? 50 : 14, 28);
+      doc.text("Presupuesto de Servicio", textX, 28);
       doc.text(
-        `Fecha: ${new Date().toLocaleDateString("es-AR")}`,
-        logoBase64 ? 50 : 14,
+        "Fecha: " + new Date().toLocaleDateString("es-AR"),
+        textX,
         35,
       );
 
@@ -691,11 +704,10 @@ document.addEventListener("DOMContentLoaded", () => {
       doc.setFontSize(11);
       doc.setFont("helvetica", "bold");
 
-      const infoBlock = pInfoBlock.textContent.trim();
-      if (infoBlock) {
+      if (infoText) {
         doc.text("Vehículo / Cliente:", 14, y);
         doc.setFont("helvetica", "normal");
-        doc.text(infoBlock, 14, y + 7);
+        doc.text(infoText, 14, y + 7);
         y += 20;
       }
 
@@ -714,14 +726,15 @@ document.addEventListener("DOMContentLoaded", () => {
       // Table rows
       doc.setTextColor(60, 60, 60);
       doc.setFont("helvetica", "normal");
-      let grandTotal = 0;
-      items.forEach((item) => {
-        const subtotal = item.cantidad * item.precio_unitario;
+      var grandTotal = 0;
+      for (var i = 0; i < items.length; i++) {
+        var item = items[i];
+        var subtotal = item.cantidad * item.precio_unitario;
         grandTotal += subtotal;
         doc.text(item.descripcion.substring(0, 50), 16, y);
         doc.text(String(item.cantidad), 114, y);
-        doc.text(`$${item.precio_unitario.toFixed(2)}`, 130, y);
-        doc.text(`$${subtotal.toFixed(2)}`, 160, y);
+        doc.text("$" + item.precio_unitario.toFixed(2), 130, y);
+        doc.text("$" + subtotal.toFixed(2), 160, y);
 
         // Divider line
         doc.setDrawColor(200, 200, 200);
@@ -732,7 +745,7 @@ document.addEventListener("DOMContentLoaded", () => {
           doc.addPage();
           y = 20;
         }
-      });
+      }
 
       // Total
       y += 4;
@@ -741,16 +754,15 @@ document.addEventListener("DOMContentLoaded", () => {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      doc.text(`TOTAL: $${grandTotal.toFixed(2)}`, 134, y + 3);
+      doc.text("TOTAL: $" + grandTotal.toFixed(2), 134, y + 3);
 
       // Observations
-      const obs = document.getElementById("pObservaciones").value.trim();
       if (obs) {
         y += 20;
         doc.setTextColor(80, 80, 80);
         doc.setFontSize(10);
         doc.setFont("helvetica", "italic");
-        doc.text(`Obs: ${obs}`, 14, y);
+        doc.text("Obs: " + obs, 14, y);
       }
 
       // Footer
@@ -764,7 +776,11 @@ document.addEventListener("DOMContentLoaded", () => {
         y,
       );
 
-      doc.save(`presupuesto_nsmotors_${Date.now()}.pdf`);
+      doc.save("presupuesto_nsmotors_" + Date.now() + ".pdf");
+      alert("✅ PDF exportado correctamente.");
+    } catch (err) {
+      console.error("Error generando PDF:", err);
+      alert("Error al generar el PDF: " + err.message);
     }
   }
 

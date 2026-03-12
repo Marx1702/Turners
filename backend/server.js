@@ -24,6 +24,9 @@ app.use("/api/seguimientos", require("./routes/seguimientos"));
 app.use("/api/bloqueos", require("./routes/bloqueos"));
 app.use("/api/presupuestos", require("./routes/presupuestos"));
 
+/* ── Redirigir raíz al index ── */
+app.get("/", (_req, res) => res.redirect("/views/index.html"));
+
 /* ── Inicio ── */
 app.listen(PORT, () => {
   console.log(`✅ Turners API corriendo en http://localhost:${PORT}`);
