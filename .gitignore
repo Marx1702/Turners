@@ -16,9 +16,12 @@ desktop.ini
 # Logs
 *.log
 npm-debug.log*
+stderr.log
+console.log
 
 # Uploads (if any)
 uploads/
+tmp/
 
 # Gemini/AI
 .gemini/
