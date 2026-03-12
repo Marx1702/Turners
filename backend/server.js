@@ -31,6 +31,30 @@ app.get("/", (_req, res) => res.redirect("/views/index.html"));
 /* ── Health check para monitoreo ── */
 app.get("/health", (_req, res) => res.json({ status: "ok", uptime: process.uptime() }));
 
+/* ── Debug (TEMPORAL – borrar en producción) ── */
+app.get("/debug", (_req, res) => {
+  const fs = require("fs");
+  const staticDir = path.join(__dirname, "..");
+  let parentFiles = [];
+  let currentFiles = [];
+  try { parentFiles = fs.readdirSync(staticDir); } catch(e) { parentFiles = [e.message]; }
+  try { currentFiles = fs.readdirSync(__dirname); } catch(e) { currentFiles = [e.message]; }
+  res.json({
+    __dirname,
+    cwd: process.cwd(),
+    staticDir,
+    parentFiles,
+    currentFiles,
+    env: {
+      DB_HOST: process.env.DB_HOST ? "SET" : "NOT SET",
+      DB_USER: process.env.DB_USER ? "SET" : "NOT SET",
+      DB_NAME: process.env.DB_NAME ? "SET" : "NOT SET",
+      PORT: process.env.PORT,
+      NODE_ENV: process.env.NODE_ENV,
+    }
+  });
+});
+
 /* ── Inicio ── */
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Turners API corriendo en http://localhost:${PORT}`);
