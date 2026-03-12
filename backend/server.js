@@ -23,11 +23,15 @@ app.use("/api/turnos", require("./routes/turnos"));
 app.use("/api/seguimientos", require("./routes/seguimientos"));
 app.use("/api/bloqueos", require("./routes/bloqueos"));
 app.use("/api/presupuestos", require("./routes/presupuestos"));
+app.use("/api/backoffice", require("./routes/backoffice"));
 
 /* ── Redirigir raíz al index ── */
 app.get("/", (_req, res) => res.redirect("/views/index.html"));
 
+/* ── Health check para monitoreo ── */
+app.get("/health", (_req, res) => res.json({ status: "ok", uptime: process.uptime() }));
+
 /* ── Inicio ── */
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Turners API corriendo en http://localhost:${PORT}`);
 });
