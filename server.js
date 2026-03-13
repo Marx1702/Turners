@@ -31,6 +31,30 @@ app.get("/", (_req, res) => res.redirect("/views/index.html"));
 /* ── Health check ── */
 app.get("/health", (_req, res) => res.json({ status: "ok", uptime: process.uptime() }));
 
+/* ── Debug (TEMPORAL) ── */
+app.get("/debug", async (_req, res) => {
+  const info = {
+    __dirname,
+    cwd: process.cwd(),
+    env: {
+      DB_HOST: process.env.DB_HOST || "NOT SET",
+      DB_USER: process.env.DB_USER || "NOT SET",
+      DB_PASSWORD: process.env.DB_PASSWORD ? "SET (" + process.env.DB_PASSWORD.length + " chars)" : "NOT SET",
+      DB_NAME: process.env.DB_NAME || "NOT SET",
+      PORT: process.env.PORT,
+    },
+    dbTest: null,
+  };
+  try {
+    const pool = require("./db/connection");
+    const [rows] = await pool.query("SELECT 1 as test");
+    info.dbTest = "✅ Conexión exitosa";
+  } catch (err) {
+    info.dbTest = "❌ " + err.message;
+  }
+  res.json(info);
+});
+
 /* ── Inicio ── */
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Turners API corriendo en http://localhost:${PORT}`);
