@@ -117,14 +117,11 @@ document.addEventListener("DOMContentLoaded", () => {
         resP.json(),
       ]);
 
-      // Filter by month
-      const turnosMes = turnos.filter((t) => t.fecha?.slice(0, 7) === prefix);
-      const segMes = seguimientos.filter(
-        (s) => s.fecha?.slice(0, 7) === prefix,
-      );
-      const presMes = presupuestos.filter(
-        (p) => p.fecha?.slice(0, 7) === prefix,
-      );
+      // Filter by month — convert to string in case of Date objects
+      const matchMonth = (d) => String(d || "").slice(0, 7) === prefix;
+      const turnosMes = turnos.filter((t) => matchMonth(t.fecha));
+      const segMes = seguimientos.filter((s) => matchMonth(s.fecha));
+      const presMes = presupuestos.filter((p) => matchMonth(p.fecha));
 
       // KPIs
       const totalTurnos = turnosMes.length;
@@ -167,9 +164,16 @@ document.addEventListener("DOMContentLoaded", () => {
       // Build daily distribution for bar chart
       const dayCounts = new Array(diasMes).fill(0);
       turnosMes.forEach((t) => {
-        const day = parseInt(t.fecha?.slice(8, 10));
-        if (day >= 1 && day <= diasMes) dayCounts[day - 1]++;
+        // Parse date robustly — handle both "2026-03-14" and "2026-03-14T00:00:00.000Z"
+        const dateStr = String(t.fecha || "");
+        const dayMatch = dateStr.match(/\d{4}-\d{2}-(\d{2})/);
+        if (dayMatch) {
+          const day = parseInt(dayMatch[1], 10);
+          if (day >= 1 && day <= diasMes) dayCounts[day - 1]++;
+        }
       });
+
+      console.log("📊 Rendimiento chart data:", { prefix, turnosMes: turnosMes.length, dayCounts: dayCounts.filter(c => c > 0), diasMes });
 
       const maxCount = Math.max(...dayCounts, 1);
       const chart = document.getElementById("rendChart");
