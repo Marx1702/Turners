@@ -318,22 +318,109 @@
   opacity: 1;
 }
 
-/* Responsive */
-@media (max-width: 700px) {
-  .stats-grid { grid-template-columns: 1fr 1fr; }
-  .stat-card { padding: 16px; }
-  .stat-number { font-size: 1.4rem; }
-  .stat-icon { font-size: 1.6rem; width: 44px; height: 44px; }
-  .dash-section-header { flex-direction: column; align-items: flex-start; }
-  .bloqueo-form { grid-template-columns: 1fr 1fr; }
-  .modal-lg { width: 96%; max-width: none; }
-  .rendimiento-kpis { grid-template-columns: repeat(3, 1fr); }
-  .rend-kpi-value { font-size: 1.2rem; }
+/* ── Dash table base ── */
+.dash-table {
+  min-width: 600px;
 }
 
+/* ── Action buttons in tables ── */
+.action-cell {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+.action-cell .btn {
+  white-space: nowrap;
+}
+
+/* ============================================
+   RESPONSIVE – Tablet (≤ 900px)
+   ============================================ */
+@media (max-width: 900px) {
+  .rendimiento-kpis {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .rend-kpi-value { font-size: 1.3rem; }
+}
+
+/* ============================================
+   RESPONSIVE – Mobile (≤ 700px)
+   ============================================ */
+@media (max-width: 700px) {
+  /* Stats */
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .stat-card { padding: 14px; gap: 10px; }
+  .stat-number { font-size: 1.3rem; }
+  .stat-icon { font-size: 1.5rem; width: 40px; height: 40px; }
+  .stat-label { font-size: 0.78rem; }
+
+  /* Section headers: stack title + button */
+  .dash-section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .dash-section-header .btn {
+    align-self: stretch;
+    text-align: center;
+  }
+
+  /* Rendimiento */
+  .rendimiento-kpis { grid-template-columns: repeat(3, 1fr); }
+  .rend-kpi-value { font-size: 1.2rem; }
+  .rend-kpi { padding: 10px 6px; }
+  .rendimiento-card { padding: 14px; }
+
+  /* All tables: ensure horizontal scroll */
+  .table-wrap { -webkit-overflow-scrolling: touch; }
+  table { font-size: 0.82rem; }
+  thead th { padding: 8px 10px; font-size: 0.72rem; }
+  td { padding: 8px 10px; }
+
+  /* Bloqueos form */
+  .bloqueo-form { grid-template-columns: 1fr 1fr; }
+  .bloqueo-form .btn { grid-column: 1 / -1; }
+
+  /* Quick form grid */
+  .quick-form [style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Modals */
+  .modal { padding: 20px; }
+  .modal-lg { width: 96%; max-width: none; }
+  .modal h2 { font-size: 1.1rem; }
+  .modal-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .modal-actions .btn { width: 100%; text-align: center; }
+
+  /* Presupuesto table */
+  .presupuesto-table { min-width: 500px; }
+  .presupuesto-items-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Dashboard header */
+  .dash-header h1 { font-size: 1.3rem; }
+}
+
+/* ============================================
+   RESPONSIVE – Small Mobile (≤ 480px)
+   ============================================ */
 @media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr; gap: 10px; }
+  .stat-card { padding: 12px 14px; }
+
   .bloqueo-form { grid-template-columns: 1fr; }
-  .rendimiento-kpis { grid-template-columns: 1fr 1fr; }
+
+  .rendimiento-kpis { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .rend-kpi-value { font-size: 1rem; }
+  .rend-kpi-label { font-size: 0.68rem; }
+
+  .dash-section-header h2 { font-size: 1rem; }
+
+  .dash-header h1 { font-size: 1.1rem; }
+  .container { padding: 16px 12px 40px; }
 }
 
 /* ============================================
