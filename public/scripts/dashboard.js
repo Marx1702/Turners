@@ -1,5 +1,5 @@
 // scripts/dashboard.js – Admin dashboard with presupuestos + PDF export
-const API = "http://localhost:3001/api";
+const API = "/api";
 
 document.addEventListener("DOMContentLoaded", () => {
   const user = (() => {

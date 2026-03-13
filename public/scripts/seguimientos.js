@@ -1,5 +1,5 @@
 // scripts/seguimientos.js – Role-aware tracking by dominio
-const API_BASE = "http://localhost:3001/api";
+const API_BASE = "/api";
 
 document.addEventListener("DOMContentLoaded", () => {
   const user = (() => {

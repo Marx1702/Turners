@@ -1,5 +1,5 @@
 // scripts/services.js – Loads from API
-const API_BASE = "http://localhost:3001/api";
+const API_BASE = "/api";
 const IMG_BASE = "../assets/images/services/";
 const IMG_PLACEHOLDER = "placeholder.jpg";
 

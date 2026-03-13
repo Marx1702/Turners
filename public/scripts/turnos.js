@@ -1,5 +1,5 @@
 // scripts/turnos.js – Personal turnos with vehicle selector and duration info
-const API_BASE = "http://localhost:3001/api";
+const API_BASE = "/api";
 
 document.addEventListener("DOMContentLoaded", () => {
   const getActiveUser = () => {

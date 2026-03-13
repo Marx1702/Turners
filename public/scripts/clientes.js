@@ -1,5 +1,5 @@
 // scripts/clientes.js – CRUD for clientes via API
-const API = "http://localhost:3001/api/clientes";
+const API = "/api/clientes";
 
 document.addEventListener("DOMContentLoaded", () => {
   // Auth guard

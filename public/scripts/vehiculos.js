@@ -1,6 +1,6 @@
 // scripts/vehiculos.js – Role-aware CRUD
-const API_V = "http://localhost:3001/api/vehiculos";
-const API_C = "http://localhost:3001/api/clientes";
+const API_V = "/api/vehiculos";
+const API_C = "/api/clientes";
 
 document.addEventListener("DOMContentLoaded", () => {
   const user = (() => {
