@@ -1,7 +1,7 @@
 -- ============================================
 -- Migration 2: Add bloqueos table for schedule management
 -- ============================================
-USE turners_db;
+USE u447396976_turners_db;
 
 CREATE TABLE IF NOT EXISTS bloqueos (
   id          INT AUTO_INCREMENT PRIMARY KEY,

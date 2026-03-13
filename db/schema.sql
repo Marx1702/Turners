@@ -2,13 +2,13 @@
 -- Turners DB – Schema (Clean)
 -- ============================================
 
-DROP DATABASE IF EXISTS turners_db;
+DROP DATABASE IF EXISTS u447396976_turners_db;
 
-CREATE DATABASE turners_db
+CREATE DATABASE u447396976_turners_db
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 
-USE turners_db;
+USE u447396976_turners_db;
 
 -- Usuarios (autenticación + perfil)
 CREATE TABLE usuarios (

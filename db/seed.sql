@@ -1,7 +1,7 @@
 -- ============================================
 -- Turners DB – Seed Data
 -- ============================================
-USE turners_db;
+USE u447396976_turners_db;
 
 INSERT INTO servicios (nombre, descripcion, duracion_min, precio, imagen) VALUES
   ('Cambio de aceite',           'Servicio rápido con insumos de calidad.',          30, 15000.00, 'cambio de aceite.jpg'),

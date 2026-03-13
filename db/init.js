@@ -9,9 +9,9 @@ const path = require("path");
 
 async function init() {
   const conn = await mysql.createConnection({
-    host: process.env.DB_HOST || "localhost",
-    user: process.env.DB_USER || "root",
-    password: process.env.DB_PASSWORD || "",
+    host: process.env.DB_HOST || "193.203.175.107",
+    user: process.env.DB_USER || "u447396976_Marx",
+    password: process.env.DB_PASSWORD || "NsMotors2026",
     multipleStatements: true,
   });
 
@@ -30,7 +30,7 @@ async function init() {
   console.log("✅ Datos iniciales insertados");
 
   // Create admin user
-  await conn.query("USE turners_db");
+  await conn.query("USE u447396976_turners_db");
   const hash = await bcrypt.hash("admin123", 10);
   await conn.query(
     "INSERT INTO usuarios (nombre, apellido, email, password_hash, rol) VALUES (?, ?, ?, ?, ?)",

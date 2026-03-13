@@ -1,7 +1,7 @@
 -- ============================================
 -- Presupuestos – Migration
 -- ============================================
-USE turners_db;
+USE u447396976_turners_db;
 
 CREATE TABLE IF NOT EXISTS presupuestos (
   id            INT AUTO_INCREMENT PRIMARY KEY,

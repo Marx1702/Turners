@@ -1,7 +1,7 @@
 -- ============================================
 -- Migration: Add roles and usuario_id to vehiculos
 -- ============================================
-USE turners_db;
+USE u447396976_turners_db;
 
 -- Add rol column to usuarios (ignore if exists)
 SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
