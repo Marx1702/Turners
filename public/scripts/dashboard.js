@@ -177,6 +177,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const maxCount = Math.max(...dayCounts, 1);
       const chart = document.getElementById("rendChart");
+      const chartHeight = 100; // usable height in px (120px container - 20px padding)
       chart.innerHTML = "";
 
       for (let d = 0; d < diasMes; d++) {
@@ -185,8 +186,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const bar = document.createElement("div");
         bar.className = `rend-bar ${dayCounts[d] === 0 ? "empty" : ""}`;
-        const pct = (dayCounts[d] / maxCount) * 100;
-        bar.style.height = dayCounts[d] > 0 ? `${Math.max(pct, 8)}%` : "2px";
+        // Use pixel heights — percentages don't work without explicit parent height
+        const pxHeight = dayCounts[d] > 0
+          ? Math.max((dayCounts[d] / maxCount) * chartHeight, 8)
+          : 2;
+        bar.style.height = `${pxHeight}px`;
 
         const tooltip = document.createElement("span");
         tooltip.className = "rend-bar-tooltip";
@@ -195,7 +199,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const label = document.createElement("span");
         label.className = "rend-bar-label";
-        // Show label for every 5th day, first, and last
         label.textContent =
           d === 0 || d === diasMes - 1 || (d + 1) % 5 === 0 ? d + 1 : "";
 
