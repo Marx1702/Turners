@@ -365,94 +365,164 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const p = clientePresData;
-    const doc = new jsPDF();
-    const pageW = doc.internal.pageSize.getWidth();
-    let y = 20;
-
-    doc.setFillColor(220, 38, 38);
-    doc.rect(0, 0, pageW, 40, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
-    doc.setFont("helvetica", "bold");
-    doc.text("TURNERS", 14, 18);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text("Presupuesto de Servicio", 14, 28);
-    doc.text(
-      `Fecha: ${p.fecha?.slice(0, 10) || new Date().toLocaleDateString("es-AR")}`,
-      14,
-      35,
-    );
-
-    y = 52;
-    doc.setTextColor(50, 50, 50);
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text(
-      `Vehículo: ${p.dominio || ""} – ${p.marca || ""} ${p.modelo || ""}`,
-      14,
-      y,
-    );
-    y += 14;
-
-    doc.setFillColor(40, 40, 40);
-    doc.rect(14, y, pageW - 28, 10, "F");
-    doc.setTextColor(255);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.text("DESCRIPCIÓN", 16, y + 7);
-    doc.text("CANT.", 110, y + 7);
-    doc.text("P. UNIT.", 130, y + 7);
-    doc.text("SUBTOTAL", 160, y + 7);
-    y += 14;
-
-    doc.setTextColor(60);
-    doc.setFont("helvetica", "normal");
-    let total = 0;
-    p.items.forEach((item) => {
-      const sub = item.cantidad * parseFloat(item.precio_unitario);
-      total += sub;
-      doc.text(item.descripcion.substring(0, 50), 16, y);
-      doc.text(String(item.cantidad), 114, y);
-      doc.text(`$${parseFloat(item.precio_unitario).toFixed(2)}`, 130, y);
-      doc.text(`$${sub.toFixed(2)}`, 160, y);
-      doc.setDrawColor(200);
-      doc.line(14, y + 3, pageW - 14, y + 3);
-      y += 9;
-      if (y > 270) {
-        doc.addPage();
-        y = 20;
-      }
-    });
-
-    y += 4;
-    doc.setFillColor(220, 38, 38);
-    doc.rect(130, y - 5, pageW - 144, 12, "F");
-    doc.setTextColor(255);
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text(`TOTAL: $${total.toFixed(2)}`, 134, y + 3);
-
-    if (p.observaciones) {
-      y += 20;
-      doc.setTextColor(80);
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "italic");
-      doc.text(`Obs: ${p.observaciones}`, 14, y);
+    var items = p.items;
+    if (!items || items.length === 0) {
+      alert("El presupuesto no tiene ítems.");
+      return;
     }
 
-    y = doc.internal.pageSize.getHeight() - 15;
-    doc.setTextColor(150);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.text(
-      "Turners – Taller Mecánico | Av. San Martín 123, Mendoza | (261) 444-5566",
-      14,
-      y,
-    );
+    var infoText = "";
+    if (p.dominio) infoText += p.dominio;
+    const descVeh = [p.marca, p.modelo, p.anio].filter(Boolean).join(" ");
+    if (descVeh) infoText += (infoText ? " - " : "") + descVeh;
+    const cliName = p.vehiculo_owner_nombre || p.cliente_nombre || activeUser.nombre;
+    if (cliName) infoText += (infoText ? " | " : "") + "Cliente: " + cliName;
 
-    doc.save(`presupuesto_turners_${p.id || Date.now()}.pdf`);
+    var obs = p.observaciones || "";
+
+    var logoImg = new Image();
+    logoImg.onload = function () {
+      try {
+        var canvas = document.createElement("canvas");
+        canvas.width = logoImg.naturalWidth;
+        canvas.height = logoImg.naturalHeight;
+        canvas.getContext("2d").drawImage(logoImg, 0, 0);
+        var logoBase64 = canvas.toDataURL("image/png");
+        generarPDFCliente(items, infoText, obs, logoBase64, p);
+      } catch (e) {
+        console.warn("Error procesando logo:", e);
+        generarPDFCliente(items, infoText, obs, null, p);
+      }
+    };
+    logoImg.onerror = function () {
+      console.warn("No se pudo cargar el logo");
+      generarPDFCliente(items, infoText, obs, null, p);
+    };
+    logoImg.src = "../images/logo.png";
   });
+
+  function generarPDFCliente(items, infoText, obs, logoBase64, p) {
+    try {
+      var doc = new window.jspdf.jsPDF();
+      var pageW = doc.internal.pageSize.getWidth();
+      var y = 20;
+      var textX = 14;
+
+      // Header bar
+      doc.setFillColor(220, 38, 38);
+      doc.rect(0, 0, pageW, 40, "F");
+
+      // Logo
+      if (logoBase64) {
+        try {
+          doc.addImage(logoBase64, "PNG", 14, 4, 32, 32);
+          textX = 50;
+        } catch (e) {
+          console.warn("Logo no se pudo agregar al PDF:", e);
+        }
+      }
+
+      // Brand text
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(22);
+      doc.setFont("helvetica", "bold");
+      doc.text("NS MOTORS", textX, 18);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text("Presupuesto de Servicio", textX, 28);
+      
+      var fechaLabel = p.fecha ? p.fecha.slice(0, 10) : new Date().toLocaleDateString("es-AR");
+      if (fechaLabel.includes("-")) {
+        const parts = fechaLabel.split("-");
+        if (parts.length === 3) fechaLabel = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+      doc.text("Fecha: " + fechaLabel, textX, 35);
+
+      // Vehicle info
+      y = 52;
+      doc.setTextColor(50, 50, 50);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+
+      if (infoText) {
+        doc.text("Vehículo / Cliente:", 14, y);
+        doc.setFont("helvetica", "normal");
+        doc.text(infoText, 14, y + 7);
+        y += 20;
+      }
+
+      // Table header
+      doc.setFillColor(40, 40, 40);
+      doc.rect(14, y, pageW - 28, 10, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.text("DESCRIPCIÓN", 16, y + 7);
+      doc.text("CANT.", 110, y + 7);
+      doc.text("P. UNIT.", 130, y + 7);
+      doc.text("SUBTOTAL", 160, y + 7);
+      y += 14;
+
+      // Table rows
+      doc.setTextColor(60, 60, 60);
+      doc.setFont("helvetica", "normal");
+      var grandTotal = 0;
+      for (var i = 0; i < items.length; i++) {
+        var item = items[i];
+        var subtotal = item.cantidad * parseFloat(item.precio_unitario);
+        grandTotal += subtotal;
+        doc.text(item.descripcion.substring(0, 50), 16, y);
+        doc.text(String(item.cantidad), 114, y);
+        doc.text("$" + parseFloat(item.precio_unitario).toFixed(2), 130, y);
+        doc.text("$" + subtotal.toFixed(2), 160, y);
+
+        // Divider line
+        doc.setDrawColor(200, 200, 200);
+        doc.line(14, y + 3, pageW - 14, y + 3);
+        y += 9;
+
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+      }
+
+      // Total
+      y += 4;
+      doc.setFillColor(220, 38, 38);
+      doc.rect(130, y - 5, pageW - 144, 12, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("TOTAL: $" + grandTotal.toFixed(2), 134, y + 3);
+
+      // Observations
+      if (obs) {
+        y += 20;
+        doc.setTextColor(80, 80, 80);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "italic");
+        doc.text("Obs: " + obs, 14, y);
+      }
+
+      // Footer
+      y = doc.internal.pageSize.getHeight() - 15;
+      doc.setTextColor(150, 150, 150);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        "NS Motors – Taller Mecánico | Av. San Martín 123, Mendoza | (261) 444-5566",
+        14,
+        y,
+      );
+
+      var filenameStr = p.id ? "presupuesto_nsmotors_" + p.id + ".pdf" : "presupuesto_nsmotors_" + Date.now() + ".pdf";
+      doc.save(filenameStr);
+    } catch (err) {
+      console.error("Error generando PDF:", err);
+      alert("Error al generar el PDF: " + err.message);
+    }
+  }
 
   loadCatalog();
   loadVehiculos();
